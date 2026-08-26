@@ -51,7 +51,7 @@ export function RoomIntervalFilter({ timezone, from, to, onChange }: RoomInterva
   }
 
   if (!timezone) {
-    return null;
+    return null; // выбор интервала имеет смысл только после выбора офиса
   }
 
   return (

@@ -98,12 +98,13 @@
     background: #f1f5f9;
 }
 
+/* ✅ Вся строка становится зелёной */
 .durationDropdown__item_selected {
-    background: #f0fdf9;
+    background: #0d9488 !important;
 }
 
 .durationDropdown__item_selected:hover {
-    background: #e6f9f4;
+    background: #0f766e !important;
 }
 
 .durationDropdown__itemLabel {
@@ -112,9 +113,15 @@
     font-weight: 400;
 }
 
+/* ✅ Текст становится белым */
 .durationDropdown__item_selected .durationDropdown__itemLabel {
     font-weight: 500;
-    color: #0d9488;
+    color: #ffffff;
+}
+
+/* ✅ Галочка становится белой */
+.durationDropdown__item_selected svg path {
+    stroke: #ffffff;
 }
 
 /* ============================================

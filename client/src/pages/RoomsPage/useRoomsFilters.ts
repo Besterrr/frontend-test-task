@@ -35,7 +35,7 @@ export function useRoomsFilters() {
           }
           return next;
         },
-        { replace: true }, // не плодим записи в истории на каждый чих фильтра
+        { replace: true },
       );
     },
     [setSearchParams],

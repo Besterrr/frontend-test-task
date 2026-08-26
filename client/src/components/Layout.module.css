@@ -1,0 +1,131 @@
+.layout {
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+.layout__nav {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.layout__navContainer {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.layout__logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.layout__brand {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+}
+
+.layout__links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.layout__link {
+    font-size: 16px;
+    font-weight: 500;
+    color: #475569;
+    text-decoration: none;
+    padding: 4px 0;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.layout__link:hover {
+    color: #0d9488;
+}
+
+.layout__link_active {
+    color: #0d9488;
+}
+
+.layout__link_active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #0d9488;
+    border-radius: 2px;
+}
+
+.layout__profile {
+    display: flex;
+    align-items: center;
+}
+
+.layout__avatar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.layout__userName {
+    font-size: 14px;
+    font-weight: 500;
+    color: #0f172a;
+}
+
+.layout__main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 40px 60px;
+}
+
+@media (max-width: 768px) {
+    .layout__navContainer {
+        padding: 0 16px;
+    }
+
+    .layout__brand {
+        font-size: 16px;
+    }
+
+    .layout__links {
+        gap: 16px;
+    }
+
+    .layout__link {
+        font-size: 14px;
+    }
+
+    .layout__userName {
+        display: none;
+    }
+
+    .layout__main {
+        padding: 16px 16px 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .layout__links {
+        gap: 12px;
+    }
+
+    .layout__link {
+        font-size: 13px;
+    }
+}
