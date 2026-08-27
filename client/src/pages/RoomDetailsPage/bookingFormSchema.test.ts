@@ -10,13 +10,14 @@ function makeSchema(now: DateTime = NOW) {
 }
 
 function baseValues(overrides: {
+  title?: string;
   date?: DateTime | null;
   startTime?: DateTime | null;
   durationMinutes?: number;
 }) {
   return {
     roomId: 'room-everest',
-    title: 'Обсуждение проекта',
+    title: overrides.title ?? 'Обсуждение проекта',
     comment: null,
     date: overrides.date ?? null,
     startTime: overrides.startTime ?? null,
@@ -41,7 +42,9 @@ describe('createBookingFormSchema', () => {
   describe('обязательные поля', () => {
     it('требует непустую тему встречи', () => {
       const schema = makeSchema();
-      const result = schema.safeParse(baseValues({ date: dayAt(1), startTime: timeAt(10) }));
+      const result = schema.safeParse(
+        baseValues({ title: '   ', date: dayAt(1), startTime: timeAt(10) }),
+      );
       expect(result.success).toBe(false);
     });
 
@@ -106,7 +109,7 @@ describe('createBookingFormSchema', () => {
       const schema = makeSchema();
       const date = dayAt(30);
       const result = schema.safeParse(
-        baseValues({ date, startTime: timeAt(10), durationMinutes: 60 }),
+        baseValues({ date, startTime: timeAt(9, 0), durationMinutes: 60 }),
       );
 
       expect(result.success).toBe(true);
@@ -153,10 +156,10 @@ describe('createBookingFormSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it('отклоняет встречу, заканчивающуюся в 20:01', () => {
+    it('отклоняет встречу, заканчивающуюся позже рабочих часов', () => {
       const schema = makeSchema();
       const result = schema.safeParse(
-        baseValues({ date: dayAt(1), startTime: timeAt(19, 1), durationMinutes: 60 }),
+        baseValues({ date: dayAt(1), startTime: timeAt(19, 15), durationMinutes: 60 }),
       );
 
       expect(result.success).toBe(false);

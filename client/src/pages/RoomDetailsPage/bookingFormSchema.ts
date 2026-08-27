@@ -71,7 +71,8 @@ export function createBookingFormSchema(context: BookingFormContext) {
         return;
       }
 
-      if (start.diff(context.now, 'days').days > MAX_ADVANCE_DAYS) {
+      const maxAdvanceMs = MAX_ADVANCE_DAYS * 24 * 60 * 60 * 1000;
+      if (start.toMillis() - context.now.toMillis() > maxAdvanceMs) {
         ctx.addIssue({
           code: 'custom',
           path: ['date'],

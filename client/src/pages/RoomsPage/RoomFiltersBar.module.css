@@ -225,6 +225,12 @@
     z-index: 1000;
 }
 
+.filtersBar__error {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #dc2626;
+}
+
 @media (max-width: 768px) {
     .filtersBar__calendarDropdown {
         left: 0;

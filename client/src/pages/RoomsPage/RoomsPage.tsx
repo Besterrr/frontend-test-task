@@ -9,37 +9,15 @@ import { RoomCard } from './RoomCard';
 import { useRoomsFilters } from './useRoomsFilters';
 import styles from './RoomsPage.module.css';
 
-// Функция для безопасного преобразования в ISO
-const toISOStringSafe = (dateStr: string | null | undefined): string | undefined => {
-  if (!dateStr) return undefined;
-  try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
-      console.warn('Invalid date string:', dateStr);
-      return undefined;
-    }
-    return date.toISOString();
-  } catch {
-    console.warn('Error parsing date:', dateStr);
-    return undefined;
-  }
-};
-
 export function RoomsPage() {
   const { filters, setFilters } = useRoomsFilters();
   const { data: offices, isLoading: officesLoading, error: officesError } = useOffices();
 
-  // Преобразуем фильтры в параметры для useRooms с правильным форматом даты
-  const fromISO = toISOStringSafe(filters.from);
-  const toISO = toISOStringSafe(filters.to);
-
   const roomsParams = {
     officeId: filters.officeId ?? '',
     ...(filters.minCapacity ? { minCapacity: filters.minCapacity } : {}),
-    ...(fromISO && toISO ? { from: fromISO, to: toISO } : {}),
+    ...(filters.from && filters.to ? { from: filters.from, to: filters.to } : {}),
   };
-
-  console.log('🔵 RoomsPage params:', roomsParams);
 
   const {
     data: rooms,
@@ -49,7 +27,7 @@ export function RoomsPage() {
   } = useRooms(roomsParams);
 
   if (officesLoading) return <LoadingState />;
-  if (officesError) return <ErrorState error={String(officesError)} />;
+  if (officesError) return <ErrorState error={officesError} />;
 
   return (
     <div className={styles.roomsPage}>
@@ -64,7 +42,7 @@ export function RoomsPage() {
         <LoadingState />
       ) : roomsError ? (
         <ErrorState
-          error={String(roomsError)}
+          error={roomsError}
           onRetry={() => {
             void refetch();
           }}

@@ -6,18 +6,23 @@ export function Layout() {
     <div className={styles.layout}>
       <nav className={styles.layout__nav}>
         <div className={styles.layout__navContainer}>
-          <div className={styles.layout__logo}>
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <rect width="36" height="36" rx="10" fill="#0D9488" />
-              <path
-                d="M15 7.5V10.5M21 7.5V10.5M11.25 15H24.75M15.75 19.5L17.25 21L20.25 18M12.75 10.5H23.25C24.0784 10.5 24.75 11.1716 24.75 12V22.5C24.75 23.3284 24.0784 24 23.25 24H12.75C11.9216 24 11.25 23.3284 11.25 22.5V12C11.25 11.1716 11.9216 10.5 12.75 10.5Z"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-            <span className={styles.layout__brand}>BookRoom</span>
-          </div>
+          <NavLink
+            to="/rooms"
+            style={{textDecoration: 'none'}}
+          >
+            <div className={styles.layout__logo}>
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <rect width="36" height="36" rx="10" fill="#0D9488" />
+                <path
+                  d="M15 7.5V10.5M21 7.5V10.5M11.25 15H24.75M15.75 19.5L17.25 21L20.25 18M12.75 10.5H23.25C24.0784 10.5 24.75 11.1716 24.75 12V22.5C24.75 23.3284 24.0784 24 23.25 24H12.75C11.9216 24 11.25 23.3284 11.25 22.5V12C11.25 11.1716 11.9216 10.5 12.75 10.5Z"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className={styles.layout__brand}>BookRoom</span>
+            </div>
+          </NavLink>
 
           <div className={styles.layout__links}>
             <NavLink

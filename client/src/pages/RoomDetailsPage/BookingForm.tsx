@@ -104,7 +104,11 @@ export function BookingForm({ roomId, timezone, onCreated }: BookingFormProps) {
       <TextField
         label="Комментарий"
         {...register('comment', {
-          setValueAs: (value: string) => (value.trim() === '' ? null : value),
+          setValueAs: (value: string | null) => {
+            if (value == null) return null;
+            const trimmed = value.trim();
+            return trimmed === '' ? null : trimmed;
+          },
         })}
         error={Boolean(errors.comment)}
         helperText={errors.comment?.message}
