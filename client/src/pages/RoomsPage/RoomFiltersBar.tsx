@@ -1,4 +1,3 @@
-// client/src/pages/RoomsPage/RoomFiltersBar.tsx
 import { DateTime } from 'luxon';
 import { useEffect, useRef, useState } from 'react';
 import type { Office } from '../../api/models';
@@ -22,6 +21,12 @@ interface RoomFiltersBarProps {
 const DEFAULT_CAPACITY = 4;
 const DEFAULT_DURATION_HOURS = 1;
 
+function deriveDateTime(from: string | null, timezone: string | null) {
+  if (!from || !timezone) return { date: '', time: '' };
+  const start = DateTime.fromISO(from).setZone(timezone);
+  return { date: start.toISODate() ?? '', time: start.toFormat('HH:mm') };
+}
+
 export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarProps) {
   const currentOffice = offices.find((office) => office.id === filters.officeId) ?? null;
   const timezone = currentOffice?.timezone ?? null;
@@ -29,10 +34,16 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  const localStart =
-    timezone && filters.from ? DateTime.fromISO(filters.from).setZone(timezone) : null;
-  const localDate = localStart?.toISODate() ?? '';
-  const localTime = localStart?.toFormat('HH:mm') ?? '';
+  const [prevFrom, setPrevFrom] = useState(filters.from);
+  const [localDate, setLocalDate] = useState(() => deriveDateTime(filters.from, timezone).date);
+  const [localTime, setLocalTime] = useState(() => deriveDateTime(filters.from, timezone).time);
+
+  if (filters.from !== prevFrom) {
+    setPrevFrom(filters.from);
+    const derived = deriveDateTime(filters.from, timezone);
+    setLocalDate(derived.date);
+    setLocalTime(derived.time);
+  }
 
   const duration =
     timezone && filters.from && filters.to
@@ -63,15 +74,19 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
   }
 
   const handleOfficeChange = (officeId: string) => {
+    setLocalDate('');
+    setLocalTime('');
     onChange({ officeId, from: null, to: null });
   };
 
   const handleDateChange = (date: string) => {
+    setLocalDate(date);
     applyInterval(date, localTime, duration);
     setIsCalendarOpen(false);
   };
 
   const handleTimeChange = (time: string) => {
+    setLocalTime(time);
     applyInterval(localDate, time, duration);
   };
 
@@ -159,8 +174,11 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
     <div className={styles.filtersBar}>
       <div className={styles.filtersBar__header}>
         <div className={styles.filtersBar__officeSelect}>
-          <label className={styles.filtersBar__label}>Выберите офис</label>
+          <label htmlFor="rooms-office-select" className={styles.filtersBar__label}>
+            Выберите офис
+          </label>
           <select
+            id="rooms-office-select"
             className={styles.filtersBar__select}
             value={filters.officeId ?? ''}
             onChange={(e) => handleOfficeChange(e.target.value)}
@@ -189,9 +207,12 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
 
       <div className={styles.filtersBar__params}>
         <div className={styles.filtersBar__param}>
-          <label className={styles.filtersBar__label}>Дата</label>
+          <label htmlFor="rooms-date-input" className={styles.filtersBar__label}>
+            Дата
+          </label>
           <div className={styles.filtersBar__dateWrapper}>
             <input
+              id="rooms-date-input"
               type="text"
               className={`${styles.filtersBar__input} ${localDate ? styles.filtersBar__input_filled : ''}`}
               value={formatDateDisplay(localDate)}
@@ -214,8 +235,11 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
         </div>
 
         <div className={styles.filtersBar__param}>
-          <label className={styles.filtersBar__label}>Время начала</label>
+          <label htmlFor="rooms-start-time" className={styles.filtersBar__label}>
+            Время начала
+          </label>
           <input
+            id="rooms-start-time"
             type="time"
             className={styles.filtersBar__input}
             value={localTime}
@@ -226,14 +250,19 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
         </div>
 
         <div className={styles.filtersBar__param}>
-          <label className={styles.filtersBar__label}>Длительность</label>
+          <label htmlFor="rooms-duration" className={styles.filtersBar__label}>
+            Длительность
+          </label>
           <DurationDropdown selectedDuration={duration} onChange={handleDurationChange} />
         </div>
 
         <div className={styles.filtersBar__param}>
-          <label className={styles.filtersBar__label}>Вместимость</label>
+          <label htmlFor="rooms-capacity" className={styles.filtersBar__label}>
+            Вместимость
+          </label>
           <div className={styles.filtersBar__capacity}>
             <input
+              id="rooms-capacity"
               type="number"
               className={styles.filtersBar__capacityInput}
               value={capacity}

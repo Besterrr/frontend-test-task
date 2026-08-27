@@ -99,7 +99,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
 
   await app.register(cors, {
     origin: config.corsOrigins,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
   });
+
   if (config.environment !== 'production') {
     const [{ default: swagger }, { default: swaggerUi }] = await Promise.all([
       import('@fastify/swagger'),

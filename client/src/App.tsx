@@ -1,3 +1,8 @@
+import { useRealtimeSync } from './hooks/useRealtimeSync';
+import { RouterProvider } from 'react-router-dom';
+import { router } from './router';
+
 export function App() {
-  return <div>Что-то там</div>;
+  useRealtimeSync();
+  return <RouterProvider router={router} />;
 }
