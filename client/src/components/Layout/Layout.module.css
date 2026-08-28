@@ -73,6 +73,7 @@
 .layout__profile {
     display: flex;
     align-items: center;
+    gap: 12px;
 }
 
 .layout__avatar {

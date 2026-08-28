@@ -52,6 +52,7 @@ export function BookingForm({ roomId, timezone, onCreated }: BookingFormProps) {
 
   const { mutateAsync } = useMutation({
     mutationFn: createBooking,
+    meta: { suppressGlobalError: true },
   });
 
   const onSubmit: SubmitHandler<BookingFormOutput> = async (values) => {

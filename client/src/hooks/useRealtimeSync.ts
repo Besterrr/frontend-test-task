@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { realtimeClient, type RealtimeEvent } from '../lib/realtimeClient';
 import { useConnectionStore } from '../store/connectionStore';
@@ -28,11 +28,26 @@ function handleRealtimeEvent(
 export function useRealtimeSync(): void {
   const queryClient = useQueryClient();
   const setStatus = useConnectionStore((state) => state.setStatus);
+  const wasInterruptedRef = useRef(false);
 
   useEffect(() => {
     realtimeClient.connect();
 
-    const unsubscribeStatus = realtimeClient.onStatusChange(setStatus);
+    const unsubscribeStatus = realtimeClient.onStatusChange((status) => {
+      setStatus(status);
+
+      if (status === 'reconnecting' || status === 'disconnected') {
+        wasInterruptedRef.current = true;
+        return;
+      }
+
+      if (status === 'connected' && wasInterruptedRef.current) {
+        wasInterruptedRef.current = false;
+        // Пока соединение было потеряно, мы могли пропустить события —
+        // на reconnect считаем весь кэш устаревшим и перезапрашиваем всё.
+        void queryClient.invalidateQueries();
+      }
+    });
 
     const unsubscribeEvent = realtimeClient.onEvent((event) => {
       handleRealtimeEvent(event, (predicate) => {

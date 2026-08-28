@@ -119,4 +119,78 @@ describe('useRealtimeSync', () => {
 
     expect(useConnectionStore.getState().status).toBe('connected');
   });
+
+  it('делает полный резинк кэша при восстановлении соединения после разрыва', () => {
+    const invalidateSpy = vi.fn();
+    let statusCallback: ((status: ConnectionStatus) => void) | undefined;
+    vi.mocked(realtimeClient.onStatusChange).mockImplementation((cb) => {
+      statusCallback = cb;
+      return vi.fn();
+    });
+
+    function customWrapper({ children }: { children: ReactNode }) {
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      queryClient.invalidateQueries = invalidateSpy;
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    }
+
+    renderHook(() => useRealtimeSync(), { wrapper: customWrapper });
+
+    statusCallback?.('connecting');
+    statusCallback?.('connected');
+    expect(invalidateSpy).not.toHaveBeenCalled();
+
+    statusCallback?.('reconnecting');
+    statusCallback?.('connected');
+
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    expect(invalidateSpy).toHaveBeenCalledWith();
+  });
+
+  it('не делает резинк при обычном первом подключении', () => {
+    const invalidateSpy = vi.fn();
+    let statusCallback: ((status: ConnectionStatus) => void) | undefined;
+    vi.mocked(realtimeClient.onStatusChange).mockImplementation((cb) => {
+      statusCallback = cb;
+      return vi.fn();
+    });
+
+    function customWrapper({ children }: { children: ReactNode }) {
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      queryClient.invalidateQueries = invalidateSpy;
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    }
+
+    renderHook(() => useRealtimeSync(), { wrapper: customWrapper });
+
+    statusCallback?.('connecting');
+    statusCallback?.('connected');
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it('делает резинк и после disconnected → connected', () => {
+    const invalidateSpy = vi.fn();
+    let statusCallback: ((status: ConnectionStatus) => void) | undefined;
+    vi.mocked(realtimeClient.onStatusChange).mockImplementation((cb) => {
+      statusCallback = cb;
+      return vi.fn();
+    });
+
+    function customWrapper({ children }: { children: ReactNode }) {
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      queryClient.invalidateQueries = invalidateSpy;
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    }
+
+    renderHook(() => useRealtimeSync(), { wrapper: customWrapper });
+
+    statusCallback?.('connecting');
+    statusCallback?.('connected');
+    statusCallback?.('disconnected');
+    statusCallback?.('connected');
+
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+  });
+
 });

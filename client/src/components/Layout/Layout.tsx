@@ -1,15 +1,14 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { ConnectionStatusIndicator } from '../ConnectionStatusIndicator';
 import styles from './Layout.module.css';
+import { Avatar } from '@mui/material';
 
 export function Layout() {
   return (
     <div className={styles.layout}>
       <nav className={styles.layout__nav}>
         <div className={styles.layout__navContainer}>
-          <NavLink
-            to="/rooms"
-            style={{textDecoration: 'none'}}
-          >
+          <NavLink to="/rooms" style={{ textDecoration: 'none' }}>
             <div className={styles.layout__logo}>
               <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                 <rect width="36" height="36" rx="10" fill="#0D9488" />
@@ -44,15 +43,10 @@ export function Layout() {
           </div>
 
           <div className={styles.layout__profile}>
+            <ConnectionStatusIndicator />
             <div className={styles.layout__avatar}>
               <span className={styles.layout__userName}>Попехин Н.</span>
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                <circle cx="20" cy="20" r="20" fill="#5478D9" />
-                <path
-                  d="M17.48 25L14.13 20.5504H13.22V25H11.38V14.8182H13.22V19.0043H13.69L17.31 14.8182H19.58L15.56 19.4616L19.75 25H17.48ZM27.1 25L23.75 20.5504H22.85V25H21V14.8182H22.85V19.0043H23.31L26.93 14.8182H29.2L25.18 19.4616L29.38 25H27.1Z"
-                  fill="white"
-                />
-              </svg>
+              <Avatar sx={{ bgcolor: '#5478D9', width: 40, height: 40, fontSize: 14 }}>ПН</Avatar>
             </div>
           </div>
         </div>
