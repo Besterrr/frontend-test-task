@@ -98,7 +98,6 @@ export function BookingForm({ roomId, timezone, onCreated }: BookingFormProps) {
         {...register('title')}
         error={Boolean(errors.title)}
         helperText={errors.title?.message}
-        required
       />
 
       <TextField
