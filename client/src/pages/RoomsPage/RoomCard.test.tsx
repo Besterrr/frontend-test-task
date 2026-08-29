@@ -46,15 +46,15 @@ describe('RoomCard', () => {
     renderCard(baseRoom);
 
     expect(screen.getByText('Эверест')).toBeInTheDocument();
-    expect(screen.getByText(/Этаж 4/)).toBeInTheDocument();
+    expect(screen.getByText(/4\s*этаж/i)).toBeInTheDocument();
     expect(screen.getByText(/до 12 чел/)).toBeInTheDocument();
   });
 
   it('отображает оснащение комнаты', () => {
     renderCard(baseRoom);
 
-    expect(screen.getByText('Проектор')).toBeInTheDocument();
-    expect(screen.getByText('Маркерная доска')).toBeInTheDocument();
+    expect(screen.getByText(/Проектор/)).toBeInTheDocument();
+    expect(screen.getByText(/Маркерная доска/)).toBeInTheDocument();
   });
 
   it('показывает статус "Свободна" когда available: true', () => {

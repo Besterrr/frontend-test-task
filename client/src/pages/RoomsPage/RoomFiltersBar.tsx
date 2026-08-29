@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { DateTime } from 'luxon';
 import {
   ScheduleOutlined as ClockIcon,
@@ -37,7 +38,13 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
 
   const derived = deriveDateTime(filters.from, timezone);
   const localDate = derived.date;
-  const localTime = derived.time;
+
+  const [timeInput, setTimeInput] = useState(derived.time);
+
+  useEffect(() => {
+    setTimeInput(derived.time);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.from, timezone]);
 
   const duration =
     timezone && filters.from && filters.to
@@ -76,17 +83,20 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
       onChange({ from: null, to: null });
       return;
     }
-    applyInterval(date.toISODate() ?? '', localTime || '09:00', duration);
+    applyInterval(date.toISODate() ?? '', timeInput || '09:00', duration);
   };
 
-  const handleTimeChange = (time: string) => {
-    if (!localDate) return;
-    applyInterval(localDate.toISODate() ?? '', time, duration);
+  const handleTimeInput = (value: string) => {
+    setTimeInput(value);
+    if (!localDate || !value) return;
+    if (/^\d{2}:\d{2}$/.test(value)) {
+      applyInterval(localDate.toISODate() ?? '', value, duration);
+    }
   };
 
   const handleDurationChange = (value: number) => {
-    if (!localDate || !localTime) return;
-    applyInterval(localDate.toISODate() ?? '', localTime, value);
+    if (!localDate || !timeInput) return;
+    applyInterval(localDate.toISODate() ?? '', timeInput, value);
   };
 
   const handleCapacityChange = (value: number) => {
@@ -130,6 +140,7 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
         <div className={styles.filtersBar__param}>
           <span className={styles.filtersBar__label}>Дата</span>
           <DatePicker
+            label="Дата"
             value={localDate}
             onChange={handleDateChange}
             minDate={minDate}
@@ -155,8 +166,8 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
               id="rooms-start-time"
               type="time"
               className={styles.filtersBar__pillInput}
-              value={localTime}
-              onChange={(e) => handleTimeChange(e.target.value)}
+              value={timeInput}
+              onChange={(e) => handleTimeInput(e.target.value)}
               disabled={!timezone || !localDate}
               step={900}
             />

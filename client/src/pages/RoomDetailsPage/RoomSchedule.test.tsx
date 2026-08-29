@@ -55,40 +55,60 @@ describe('RoomSchedule', () => {
     expect(screen.queryByText('На этот день нет бронирований')).not.toBeInTheDocument();
   });
 
-  it('отображает тему встречи и время в таймзоне офиса', () => {
-    render(<RoomSchedule bookings={[makeBooking()]} timezone={TIMEZONE} />);
+  it('показывает тему встречи для собственного бронирования', () => {
+    render(
+      <RoomSchedule
+        bookings={[makeBooking()]}
+        timezone={TIMEZONE}
+        currentUserId="user-konstantin"
+      />,
+    );
 
-    // 07:00 UTC -> 10:00 Europe/Moscow (UTC+3)
-    expect(screen.getByText(/10:00–11:00 · Обсуждение проекта/)).toBeInTheDocument();
+    expect(screen.getByText('Обсуждение проекта')).toBeInTheDocument();
   });
 
-  it('отображает имя владельца бронирования', () => {
-    render(<RoomSchedule bookings={[makeBooking()]} timezone={TIMEZONE} />);
+  it('скрывает тему чужого бронирования и показывает "Занято"', () => {
+    render(
+      <RoomSchedule
+        bookings={[makeBooking({ userId: 'user-anna' })]}
+        timezone={TIMEZONE}
+        currentUserId="user-konstantin"
+      />,
+    );
 
-    expect(screen.getByText('Константин Кузнецов')).toBeInTheDocument();
+    expect(screen.getByText('Занято')).toBeInTheDocument();
+    expect(screen.queryByText('Обсуждение проекта')).not.toBeInTheDocument();
   });
 
-  it('рендерит несколько бронирований в списке', () => {
+  it('показывает "Занято", если currentUserId не передан', () => {
+    render(<RoomSchedule bookings={[makeBooking()]} timezone={TIMEZONE} />);
+
+    expect(screen.getByText('Занято')).toBeInTheDocument();
+  });
+
+  it('отображает часовую сетку с 09:00 до 20:00', () => {
+    render(<RoomSchedule bookings={[makeBooking()]} timezone={TIMEZONE} />);
+
+    expect(screen.getByText('09:00')).toBeInTheDocument();
+    expect(screen.getByText('20:00')).toBeInTheDocument();
+  });
+
+  it('рендерит несколько бронирований одновременно', () => {
     const bookings = [
-      makeBooking({ id: 'booking-1', title: 'Встреча 1' }),
+      makeBooking({ id: 'booking-1', userId: 'user-konstantin', title: 'Встреча 1' }),
       makeBooking({
         id: 'booking-2',
-        title: 'Встреча 2',
+        userId: 'user-anna',
         startsAt: '2026-08-19T09:00:00.000Z',
         endsAt: '2026-08-19T09:30:00.000Z',
       }),
     ];
 
-    render(<RoomSchedule bookings={bookings} timezone={TIMEZONE} />);
+    render(
+      <RoomSchedule bookings={bookings} timezone={TIMEZONE} currentUserId="user-konstantin" />,
+    );
 
-    expect(screen.getByText(/Встреча 1/)).toBeInTheDocument();
-    expect(screen.getByText(/Встреча 2/)).toBeInTheDocument();
-  });
-
-  it('корректно пересчитывает время для другой таймзоны офиса', () => {
-    render(<RoomSchedule bookings={[makeBooking()]} timezone="Asia/Yekaterinburg" />);
-
-    // 07:00 UTC -> 12:00 Asia/Yekaterinburg (UTC+5)
-    expect(screen.getByText(/12:00–13:00 · Обсуждение проекта/)).toBeInTheDocument();
+    expect(screen.getByText('Встреча 1')).toBeInTheDocument();
+    expect(screen.getByText('Занято')).toBeInTheDocument();
   });
 });

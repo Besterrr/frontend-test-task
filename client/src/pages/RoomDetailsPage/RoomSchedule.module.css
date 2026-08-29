@@ -1,0 +1,64 @@
+.schedule {
+    display: flex;
+    gap: 12px;
+}
+
+.schedule__hours {
+    display: flex;
+    flex-direction: column;
+    width: 48px;
+    flex-shrink: 0;
+}
+
+.schedule__hourRow {
+    height: 56px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.schedule__hourLabel {
+    font-size: 13px;
+    color: var(--color-text-hint, #94a3b8);
+    transform: translateY(-8px);
+}
+
+.schedule__grid {
+    position: relative;
+    flex: 1;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+}
+
+.schedule__gridLine {
+    height: 56px;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.schedule__event {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.schedule__event_own {
+    background: #e6faf5;
+    border-left: 3px solid var(--color-primary, #0d9488);
+}
+
+.schedule__event_busy {
+    background: #f1f5f9;
+    border-left: 3px solid #cbd5e1;
+}
+
+.schedule__eventTitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: #0f172a;
+}
+
+.schedule__event_busy .schedule__eventTitle {
+    color: #64748b;
+}

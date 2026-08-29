@@ -1,0 +1,31 @@
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: var(--color-text-secondary, #475569);
+}
+
+.breadcrumbs__item {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumbs__link {
+    color: var(--color-text-secondary, #475569);
+    text-decoration: none;
+}
+
+.breadcrumbs__link:hover {
+    color: var(--color-primary, #0d9488);
+}
+
+.breadcrumbs__current {
+    color: var(--color-text-primary, #0f172a);
+    font-weight: 500;
+}
+
+.breadcrumbs__separator {
+    margin: 0 8px;
+    color: var(--color-text-hint, #94a3b8);
+}

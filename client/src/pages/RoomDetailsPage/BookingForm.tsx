@@ -92,7 +92,6 @@ export function BookingForm({ roomId, timezone, onCreated }: BookingFormProps) {
       onSubmit={(event) => {
         void handleSubmit(onSubmit)(event);
       }}
-      sx={{ maxWidth: 420 }}
     >
       <TextField
         label="Тема встречи"

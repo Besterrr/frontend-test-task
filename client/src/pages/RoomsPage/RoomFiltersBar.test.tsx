@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
@@ -57,12 +57,20 @@ function tomorrowAt(timezone: string, hour: number, minute = 0) {
     .set({ hour, minute, second: 0, millisecond: 0 });
 }
 
+async function selectOffice(user: ReturnType<typeof userEvent.setup>, officeName: string) {
+  const switcher = screen.getAllByRole('button', { name: /Выберите офис|Офис/ })[0];
+  if (!switcher) throw new Error('Кнопка выбора офиса не найдена');
+  await user.click(switcher);
+  const menu = await screen.findByRole('menu');
+  await user.click(within(menu).getByText(officeName));
+}
+
 describe('RoomFiltersBar', () => {
   it('вызывает onChange с officeId и сбрасывает интервал при выборе офиса', async () => {
     const user = userEvent.setup();
     const { onChange } = renderBar(emptyFilters);
 
-    await user.selectOptions(screen.getByLabelText('Выберите офис'), 'office-moscow');
+    await selectOffice(user, 'Офис Москва');
 
     expect(onChange).toHaveBeenCalledWith({
       officeId: 'office-moscow',

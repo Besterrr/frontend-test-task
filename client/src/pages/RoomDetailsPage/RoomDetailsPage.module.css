@@ -1,0 +1,66 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.page__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.scheduleCard {
+    flex: 1;
+    background: var(--color-bg-white, #ffffff);
+    border: 1px solid var(--color-border-light, #e8ecf0);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.scheduleCard__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.scheduleCard__title {
+    font-weight: 600;
+}
+
+.scheduleCard__date {
+    color: var(--color-text-secondary, #475569);
+    margin-top: 2px;
+}
+
+.scheduleCard__dateField {
+    max-width: 200px;
+}
+
+.scheduleCard__footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.scheduleCard__bookButton {
+    background-color: var(--color-primary, #0d9488) !important;
+    text-transform: none;
+}
+
+.dialog__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@media (max-width: 900px) {
+    .page__layout {
+        flex-direction: column;
+    }
+}
