@@ -43,8 +43,6 @@ export function useRealtimeSync(): void {
 
       if (status === 'connected' && wasInterruptedRef.current) {
         wasInterruptedRef.current = false;
-        // Пока соединение было потеряно, мы могли пропустить события —
-        // на reconnect считаем весь кэш устаревшим и перезапрашиваем всё.
         void queryClient.invalidateQueries();
       }
     });

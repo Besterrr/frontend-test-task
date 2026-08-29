@@ -1,73 +1,114 @@
-# React + TypeScript + Vite
+# BookRoom — Система бронирования переговорных комнат
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Веб-приложение, в котором сотрудник может найти свободную переговорную, забронировать её и управлять своими бронированиями. Backend, real-time API и тестовые данные предоставлены отдельно (см. `../server`).
 
-Currently, two official plugins are available:
+## Технологии
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Категория            | Выбор                            | Почему                                                                                       |
+| -------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Сборка               | Vite + React 19 + TypeScript       | Требование задания, быстрый dev-сервер, встроенная поддержка TS                                  |
+| Роутинг              | `react-router-dom` v7              | Требование задания                                                                               |
+| Серверный кэш        | TanStack Query                     | Кэширование, ретраи, инвалидация по WS-событиям, встроенные `QueryCache`/`MutationCache` для централизованной обработки ошибок |
+| Клиентское состояние | Zustand                            | Минималистичное хранилище для единственного глобального UI-состояния — статуса WebSocket-соединения |
+| Формы и валидация    | react-hook-form + zod              | Схема валидации переиспользует бизнес-правила бэкенда (рабочие часы, шаг 15 минут, горизонт 30 дней) |
+| UI-библиотека        | MUI                                 | Готовые доступные (a11y) компоненты — DatePicker, TimePicker, Dialog, Chip и т.д.                |
+| HTTP                 | axios                              | Интерцепторы для маппинга ошибок API в типизированный `ApiError`                                 |
+| Даты и время         | luxon                              | Совпадает с библиотекой на backend — единое поведение при пересчёте таймзон офисов и переиспользование формул валидации интервалов |
+| Real-time            | `reconnecting-websocket`           | Автоматическое переподключение с backoff, на чём строится resync после разрыва связи             |
+| Уведомления          | notistack                          | Тосты для успехов/ошибок, централизованный показ через `MutationCache`/`QueryCache`              |
+| Тесты                | vitest + @testing-library/react    | Быстрый раннер на связке с Vite, поведенческое тестирование компонентов                          |
 
-## React Compiler
+## Быстрый запуск
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Требуется Node.js 20+ и уже запущенный backend (см. `../server/README.md`).
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+npm ci
+cp .env.example .env
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Приложение поднимется на `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+### Переменные окружения
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+| Переменная         | Значение по умолчанию          | Назначение                |
+| ------------------- | -------------------------------- | --------------------------- |
+| `VITE_API_BASE_URL` | `http://localhost:3000`          | Базовый URL REST API        |
+| `VITE_WS_URL`       | `ws://localhost:3000/api/v1/ws`  | URL WebSocket-соединения    |
+
+## Команды
+
+| Команда               | Назначение                                   |
+| ----------------------- | ----------------------------------------------- |
+| `npm run dev`          | Запуск dev-сервера с HMR                        |
+| `npm run build`        | Сборка production-бандла                        |
+| `npm run preview`      | Локальный просмотр production-сборки            |
+| `npm test`             | Запуск всех тестов один раз                      |
+| `npm run test:watch`   | Тесты в watch-режиме                             |
+| `npm run test:ui`      | Тесты с UI-репортером vitest                     |
+| `npm run lint`         | Проверка ESLint                                  |
+| `npm run format`       | Форматирование Prettier                          |
+| `npm run check`        | Полная проверка: формат → lint → тесты           |
+
+Запуск отдельного файла или теста:
+
+```bash
+npx vitest run src/lib/ics.test.ts
+npx vitest run src/pages/RoomsPage/RoomFiltersBar.test.tsx -t "название теста"
 ```
+
+## Маршруты
+
+| Путь              | Страница                                    |
+| ------------------ | ---------------------------------------------- |
+| `/`                | Редирект на `/rooms`                            |
+| `/rooms`           | Список переговорных с фильтрами                 |
+| `/rooms/:roomId`   | Комната: расписание на день + бронирование      |
+| `/bookings`        | Бронирования текущего пользователя              |
+| `*`                | Страница «Ничего не найдено»                    |
+
+## Архитектура
+
+```
+src/
+├── api/          HTTP-клиент, типы моделей, обёртки над эндпоинтами
+├── components/   Переиспользуемые UI-компоненты
+├── hooks/        React Query хуки и подписка на real-time события
+├── lib/          Утилиты: работа с офисным временем, WebSocket-клиент, экспорт .ics, обработка ошибок
+├── pages/        Компоненты страниц с подкомпонентами, стилями и тестами рядом
+├── store/        Zustand-стор статуса WS-соединения
+└── main.tsx      Композиция провайдеров
+```
+
+Разделение состояния: **TanStack Query** — источник правды для всех серверных данных. Фильтры страниц живут в URL search params, а не в отдельном сторе — это даёт шаринг ссылок и работу кнопки «назад» браузера. **Zustand** используется только для статуса WebSocket-соединения.
+
+### Real-time обновления
+
+WebSocket-клиент рассылает типизированные события (`booking.created`, `booking.cancelled`, `room.availability_changed`, `data.reset`) подписчикам, которые точечно инвалидируют соответствующие react-query ключи. При восстановлении соединения после разрыва выполняется полный резинк кэша — backend не хранит журнал событий, поэтому это единственный надёжный способ не потерять изменения, произошедшие во время разрыва связи. Статус соединения отображается индикатором в шапке приложения.
+
+### Обработка ошибок
+
+Происходит на двух уровнях. Локальная обработка — там, где UX требует конкретной реакции: 409 `BOOKING_CONFLICT` при создании бронирования подсвечивает поле времени начала вместо общего тоста, отмена бронирования делает rollback кэша при неудаче с контекстным сообщением. Глобальный перехват — все остальные ошибки запросов и мутаций автоматически показываются тостом через единую подписку на кэш React Query, включая отдельное распознавание сетевых обрывов.
+
+### Оптимистичные обновления
+
+Отмена бронирования сразу убирает запись из кэша, не дожидаясь ответа сервера, а при ошибке восстанавливает предыдущее состояние.
+
+## Обоснование решений
+
+- **luxon.** Совпадает с библиотекой на backend, что даёт единое поведение при работе с таймзонами офисов и позволяет напрямую переиспользовать формулы валидации интервалов (рабочие часы, шаг 15 минут, горизонт бронирования).
+- **Раздельные `z.input`/`z.output` типы формы бронирования.** Тип значений формы допускает `null` до заполнения, тип после валидации — гарантированно заполненные поля; убирает лишние приведения типов в обработчике отправки.
+- **409 `BOOKING_CONFLICT` через подсветку поля, а не тост.** Это ошибка конкретного поля формы, а не абстрактная неудача операции — так понятнее, что именно поменять.
+- **Полный резинк кэша при восстановлении WebSocket-соединения**, а не попытка доиграть пропущенные события — backend не поддерживает журнал/переотправку событий с момента разрыва.
+- **Окно экспорта в `.ics` — последние 14 дней и будущие 30 дней.** 30 дней вперёд совпадает с горизонтом бронирования, 14 дней назад — запас для внесения встречи в календарь постфактум.
+
+## Тестирование
+
+```bash
+npm test
+npm run test:watch
+npm run test:ui
+```
+
+Покрытие включает бизнес-валидацию форм (граничные случаи рабочих часов, шага 15 минут, горизонта бронирования), поведенческие тесты страниц и компонентов (loading/error/empty состояния, фильтры, отмена, экспорт в календарь), обработку WebSocket-событий и переподключения, роутинг, а также регрессионные тесты на найденные баги. Хуки-обёртки над React Query не покрыты отдельными юнит-тестами — они являются тонким слоем над `useQuery` и косвенно проверяются через тесты использующих их страниц.
