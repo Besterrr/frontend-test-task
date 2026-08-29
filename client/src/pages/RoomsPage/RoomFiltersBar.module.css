@@ -1,168 +1,168 @@
 .filtersBar {
-    background: #ffffff;
-    padding: 20px 0;
+  background: #ffffff;
+  padding: 20px 0;
 }
 
 .filtersBar__header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
 .filtersBar__officeInfo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: #475569;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #475569;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
 .filtersBar__address {
-    color: #0f172a;
+  color: #0f172a;
 }
 
 .filtersBar__divider {
-    color: #e2e8f0;
+  color: #e2e8f0;
 }
 
 .filtersBar__time {
-    color: #475569;
+  color: #475569;
 }
 
 .filtersBar__divider {
-    border: none;
-    border-top: 1px solid #e2e8f0;
-    margin: 16px 0 20px;
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 16px 0 20px;
 }
 
 .filtersBar__params {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 
 @media (max-width: 768px) {
-    .filtersBar__params {
-        grid-template-columns: 1fr 1fr;
-    }
+  .filtersBar__params {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 480px) {
-    .filtersBar__params {
-        grid-template-columns: 1fr;
-    }
+  .filtersBar__params {
+    grid-template-columns: 1fr;
+  }
 }
 
 .filtersBar__param {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .filtersBar__label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
 }
 
 .filtersBar__pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 8px 10px;
-    transition: border-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: border-color 0.2s ease;
 }
 
 .filtersBar__pill:focus-within {
-    border-color: #0d9488;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .filtersBar__pillIcon {
-    color: #94a3b8;
-    flex-shrink: 0;
+  color: #94a3b8;
+  flex-shrink: 0;
 }
 
 .filtersBar__pillInput {
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    color: #0f172a;
-    font-family: inherit;
-    width: 100%;
-    padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #0f172a;
+  font-family: inherit;
+  width: 100%;
+  padding: 0;
 }
 
 .filtersBar__pillInput:focus {
-    outline: none;
+  outline: none;
 }
 
 .filtersBar__pillPrefix,
 .filtersBar__pillSuffix {
-    font-size: 14px;
-    color: #0f172a;
-    white-space: nowrap;
+  font-size: 14px;
+  color: #0f172a;
+  white-space: nowrap;
 }
 
 .filtersBar__capacityInput {
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    color: #0f172a;
-    text-align: center;
-    width: 24px;
-    padding: 0;
-    font-family: inherit;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #0f172a;
+  text-align: center;
+  width: 24px;
+  padding: 0;
+  font-family: inherit;
 }
 
 .filtersBar__capacityInput:focus {
-    outline: none;
+  outline: none;
 }
 
 .filtersBar__capacityInput::-webkit-inner-spin-button,
 .filtersBar__capacityInput::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.filtersBar__capacityInput[type="number"] {
-    -moz-appearance: textfield;
+.filtersBar__capacityInput[type='number'] {
+  -moz-appearance: textfield;
 }
 
 .filtersBar__capacityControls {
-    display: flex;
-    flex-direction: column;
-    margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  margin-left: auto;
 }
 
 .filtersBar__capacityBtn {
-    background: transparent;
-    border: none;
-    padding: 0 4px;
-    font-size: 9px;
-    color: #94a3b8;
-    cursor: pointer;
-    line-height: 1.2;
+  background: transparent;
+  border: none;
+  padding: 0 4px;
+  font-size: 9px;
+  color: #94a3b8;
+  cursor: pointer;
+  line-height: 1.2;
 }
 
 .filtersBar__capacityBtn:hover {
-    color: #0f172a;
+  color: #0f172a;
 }
 
 .filtersBar__pillField :global(.MuiOutlinedInput-root) {
-    background: #f8fafc;
-    border-radius: 8px;
+  background: #f8fafc;
+  border-radius: 8px;
 }
 
 .filtersBar__error {
-    margin-top: 12px;
-    font-size: 13px;
-    color: #dc2626;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #dc2626;
 }

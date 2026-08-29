@@ -192,5 +192,4 @@ describe('useRealtimeSync', () => {
 
     expect(invalidateSpy).toHaveBeenCalledTimes(1);
   });
-
 });

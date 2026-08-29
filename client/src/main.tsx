@@ -18,7 +18,7 @@ createRoot(document.getElementById('root')!).render(
       <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
         <LocalizationProvider dateAdapter={AdapterLuxon}>
           <QueryClientProvider client={queryClient}>
-              <App />
+            <App />
           </QueryClientProvider>
         </LocalizationProvider>
       </SnackbarProvider>

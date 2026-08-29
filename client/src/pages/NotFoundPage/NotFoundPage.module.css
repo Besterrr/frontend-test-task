@@ -1,36 +1,36 @@
 .notFound {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 120px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 20px;
 }
 
 .notFound__code {
-    font-size: 72px;
-    font-weight: 800;
-    color: var(--color-primary, #0d9488);
-    line-height: 1;
-    letter-spacing: -0.02em;
+  font-size: 72px;
+  font-weight: 800;
+  color: var(--color-primary, #0d9488);
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .notFound__title {
-    font-weight: 700;
-    color: var(--color-text-primary, #0f172a);
-    margin-top: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary, #0f172a);
+  margin-top: 12px;
 }
 
 .notFound__description {
-    color: var(--color-text-secondary, #475569);
-    max-width: 420px;
-    margin-top: 8px;
-    margin-bottom: 24px;
+  color: var(--color-text-secondary, #475569);
+  max-width: 420px;
+  margin-top: 8px;
+  margin-bottom: 24px;
 }
 
 .notFound__button {
-    background-color: var(--color-primary, #0d9488) !important;
-    text-transform: none;
-    border-radius: var(--radius-md, 8px);
-    padding: 10px 20px;
+  background-color: var(--color-primary, #0d9488) !important;
+  text-transform: none;
+  border-radius: var(--radius-md, 8px);
+  padding: 10px 20px;
 }

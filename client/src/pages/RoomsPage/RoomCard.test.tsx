@@ -111,5 +111,4 @@ describe('RoomCard', () => {
 
     expect(screen.getByRole('button', { name: 'Забронировать' })).not.toBeDisabled();
   });
-
 });
