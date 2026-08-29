@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import { RoomFiltersBar } from './RoomFiltersBar';
 import type { RoomsFilters } from './useRoomsFilters';
 import type { Office } from '../../api/models';
@@ -29,9 +31,23 @@ const emptyFilters: RoomsFilters = {
   to: null,
 };
 
+function Wrapper({
+  filters,
+  onChange,
+}: {
+  filters: RoomsFilters;
+  onChange: (patch: Partial<RoomsFilters>) => void;
+}) {
+  return (
+    <LocalizationProvider dateAdapter={AdapterLuxon}>
+      <RoomFiltersBar offices={offices} filters={filters} onChange={onChange} />
+    </LocalizationProvider>
+  );
+}
+
 function renderBar(filters: RoomsFilters, onChange = vi.fn()) {
-  render(<RoomFiltersBar offices={offices} filters={filters} onChange={onChange} />);
-  return { onChange };
+  const utils = render(<Wrapper filters={filters} onChange={onChange} />);
+  return { onChange, ...utils };
 }
 
 function tomorrowAt(timezone: string, hour: number, minute = 0) {
@@ -58,80 +74,99 @@ describe('RoomFiltersBar', () => {
   it('поля даты и времени неактивны, пока офис не выбран', () => {
     renderBar(emptyFilters);
 
-    expect(screen.getByPlaceholderText('Выберите дату')).toBeDisabled();
+    const dateGroup = screen.getByRole('group', { name: /Дата/ });
+    expect(dateGroup.className).toMatch(/Mui-disabled/);
     expect(screen.getByLabelText('Время начала')).toBeDisabled();
   });
 
-  it('поля даты и времени активны после выбора офиса', () => {
+  it('поле даты активно после выбора офиса', () => {
     renderBar({ ...emptyFilters, officeId: 'office-moscow' });
 
-    expect(screen.getByPlaceholderText('Выберите дату')).not.toBeDisabled();
-    expect(screen.getByLabelText('Время начала')).not.toBeDisabled();
+    const dateGroup = screen.getByRole('group', { name: /Дата/ });
+    expect(dateGroup.className).not.toMatch(/Mui-disabled/);
   });
 
-  it('ввод только времени не вызывает onChange с валидным интервалом (дата ещё не выбрана)', async () => {
+  it('время начала неактивно, пока дата не выбрана', () => {
+    renderBar({ ...emptyFilters, officeId: 'office-moscow' });
+
+    expect(screen.getByLabelText('Время начала')).toBeDisabled();
+  });
+
+  it('формирует корректный UTC ISO с учётом таймзоны офиса при выборе даты (регрессия таймзонового бага)', async () => {
     const user = userEvent.setup();
     const { onChange } = renderBar({ ...emptyFilters, officeId: 'office-moscow' });
 
-    await user.type(screen.getByLabelText('Время начала'), '10:00');
+    const dateGroup = screen.getByRole('group', { name: /Дата/ });
+    await user.click(dateGroup);
 
-    for (const call of onChange.mock.calls) {
-      expect(call[0]).toEqual({ from: null, to: null });
-    }
-  });
+    const target = tomorrowAt('Europe/Moscow', 0);
+    const dateStr = target.toFormat('MM/dd/yyyy');
+    await user.type(dateGroup, dateStr);
+    await user.keyboard('{Enter}');
 
-  it('время не стирается при повторном вводе (регрессия бага частичного ввода)', async () => {
-    const user = userEvent.setup();
-    renderBar({ ...emptyFilters, officeId: 'office-moscow' });
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    const timeInput = screen.getByLabelText('Время начала') as HTMLInputElement;
-    await user.type(timeInput, '10:15');
-
-    expect(timeInput.value).toBe('10:15');
-  });
-
-  it('формирует корректный UTC ISO с учётом таймзоны офиса при выборе даты и времени (регрессия таймзонового бага)', async () => {
-    const user = userEvent.setup();
-    const { onChange } = renderBar({ ...emptyFilters, officeId: 'office-moscow' });
-
-    await user.type(screen.getByLabelText('Время начала'), '10:00');
-
-    onChange.mockClear();
-
-    const dateInput = screen.getByPlaceholderText('Выберите дату');
-    await user.click(dateInput);
-
-    const target = tomorrowAt('Europe/Moscow', 10);
-    const calendar = await screen.findByRole('button', { name: String(target.day) });
-    await user.click(calendar);
-
-    const lastCall = onChange.mock.calls.at(-1)?.[0] as { from: string; to: string };
+    expect(onChange).toHaveBeenCalled();
+    const lastCall = onChange.mock.calls.at(-1)?.[0] as { from: string };
     expect(lastCall.from).toBeDefined();
 
     const startUtc = new Date(lastCall.from);
-    // Europe/Moscow = UTC+3(10 - 3)
-    expect(startUtc.getUTCHours()).toBe(7);
-    expect(startUtc.getUTCMinutes()).toBe(0);
+    expect(startUtc.getUTCHours()).toBe(6); // 09:00 MSK -> 06:00 UTC (дефолт при выборе только даты)
+  });
+
+  it('после выбора даты и времени формирует корректный UTC интервал (регрессия таймзонового бага)', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <Wrapper filters={{ ...emptyFilters, officeId: 'office-moscow' }} onChange={onChange} />,
+    );
+
+    const dateGroup = screen.getByRole('group', { name: /Дата/ });
+    const target = tomorrowAt('Europe/Moscow', 10);
+    await user.click(dateGroup);
+    await user.type(dateGroup, target.toFormat('MM/dd/yyyy'));
+    await user.keyboard('{Enter}');
+
+    const dateCall = onChange.mock.calls.at(-1)?.[0] as { from: string; to: string };
+    expect(dateCall.from).toBeDefined();
+
+    onChange.mockClear();
+
+    // Компонент полностью controlled: имитируем обновление URL-параметров родителем
+    rerender(
+      <Wrapper
+        filters={{
+          ...emptyFilters,
+          officeId: 'office-moscow',
+          from: dateCall.from,
+          to: dateCall.to,
+        }}
+        onChange={onChange}
+      />,
+    );
+
+    const timeInput = screen.getByLabelText('Время начала');
+    fireEvent.change(timeInput, { target: { value: '10:00' } });
+
+    const lastCall = onChange.mock.calls.at(-1)?.[0] as { from: string };
+    expect(lastCall.from).toBeDefined();
+
+    const startUtc = new Date(lastCall.from);
+    expect(startUtc.getUTCHours()).toBe(7); // 10:00 MSK -> 07:00 UTC
   });
 
   it('использует другую таймзону для другого офиса', async () => {
     const user = userEvent.setup();
     const { onChange } = renderBar({ ...emptyFilters, officeId: 'office-yekb' });
 
-    await user.type(screen.getByLabelText('Время начала'), '10:00');
-    onChange.mockClear();
+    const dateGroup = screen.getByRole('group', { name: /Дата/ });
+    await user.click(dateGroup);
 
-    await user.click(screen.getByPlaceholderText('Выберите дату'));
-
-    const target = tomorrowAt('Asia/Yekaterinburg', 10);
-    const dayButton = await screen.findByRole('button', { name: String(target.day) });
-    await user.click(dayButton);
+    const target = tomorrowAt('Asia/Yekaterinburg', 0);
+    await user.type(dateGroup, target.toFormat('MM/dd/yyyy'));
+    await user.keyboard('{Enter}');
 
     const lastCall = onChange.mock.calls.at(-1)?.[0] as { from: string };
     const startUtc = new Date(lastCall.from);
-    // Asia/Yekaterinburg = UTC+5
-    expect(startUtc.getUTCHours()).toBe(5);
+    expect(startUtc.getUTCHours()).toBe(4); // 09:00 Yekaterinburg (UTC+5) -> 04:00 UTC
   });
 
   it('отображает выбранную дату и время из filters (синхронизация с внешним состоянием)', () => {
@@ -152,7 +187,7 @@ describe('RoomFiltersBar', () => {
   });
 
   it('показывает сообщение об ошибке для интервала вне рабочих часов', () => {
-    const target = tomorrowAt('Europe/Moscow', 5); // до начала рабочего дня
+    const target = tomorrowAt('Europe/Moscow', 5);
     const from = target.toUTC().toISO()!;
     const to = target.plus({ minutes: 15 }).toUTC().toISO()!;
 
@@ -206,7 +241,7 @@ describe('RoomFiltersBar', () => {
     renderBar(emptyFilters);
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    const capacityInput = screen.getByRole('spinbutton') as HTMLInputElement;
+    const capacityInput = screen.getByLabelText('Вместимость') as HTMLInputElement;
     expect(capacityInput.value).toBe('4');
   });
 

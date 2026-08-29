@@ -78,6 +78,10 @@
     transition: all 0.15s ease;
 }
 
+.durationDropdown__item_active {
+    background: #f1f5f9;
+}
+
 .durationDropdown__item:hover {
     background: #f1f5f9;
 }

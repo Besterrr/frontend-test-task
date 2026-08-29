@@ -153,4 +153,41 @@ describe('BookingListItem', () => {
     await user.click(button);
     expect(screen.queryByText('Не удалось отменить бронирование')).not.toBeInTheDocument();
   });
+
+  it('показывает кнопку экспорта в календарь для бронирования в пределах окна', () => {
+    render(<BookingListItem booking={makeBooking()} onCancel={vi.fn()} isCancelling={false} />);
+
+    expect(screen.getByRole('button', { name: 'Добавить в календарь' })).toBeInTheDocument();
+  });
+
+  it('не показывает кнопку экспорта для бронирования дальше 30 дней вперёд', () => {
+    render(
+      <BookingListItem
+        booking={makeBooking({
+          startsAt: '2026-09-25T07:00:00.000Z',
+          endsAt: '2026-09-25T08:00:00.000Z',
+        })}
+        onCancel={vi.fn()}
+        isCancelling={false}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Добавить в календарь' })).not.toBeInTheDocument();
+  });
+
+  it('не показывает кнопку экспорта для бронирования старше 14 дней', () => {
+    render(
+      <BookingListItem
+        booking={makeBooking({
+          startsAt: '2026-07-25T07:00:00.000Z',
+          endsAt: '2026-07-25T08:00:00.000Z',
+        })}
+        onCancel={vi.fn()}
+        isCancelling={false}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Добавить в календарь' })).not.toBeInTheDocument();
+  });
+
 });

@@ -1,7 +1,10 @@
 import { DateTime } from 'luxon';
-import { useEffect, useRef, useState } from 'react';
-import type { Office } from '../../api/models';
-import { Calendar } from '../../components/Calendar';
+import {
+  ScheduleOutlined as ClockIcon,
+  PeopleAltOutlined as PeopleIcon,
+} from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { OfficeSwitcher } from '../../components/OfficeSwitcher';
 import { DurationDropdown } from '../../components/DurationDropdown';
 import {
   toOfficeIso,
@@ -9,6 +12,7 @@ import {
   validateOfficeInterval,
   MAX_ADVANCE_DAYS,
 } from '../../lib/officeTime';
+import type { Office } from '../../api/models';
 import type { RoomsFilters } from './useRoomsFilters';
 import styles from './RoomFiltersBar.module.css';
 
@@ -22,28 +26,18 @@ const DEFAULT_CAPACITY = 4;
 const DEFAULT_DURATION_HOURS = 1;
 
 function deriveDateTime(from: string | null, timezone: string | null) {
-  if (!from || !timezone) return { date: '', time: '' };
+  if (!from || !timezone) return { date: null as DateTime | null, time: '' };
   const start = DateTime.fromISO(from).setZone(timezone);
-  return { date: start.toISODate() ?? '', time: start.toFormat('HH:mm') };
+  return { date: start.startOf('day'), time: start.toFormat('HH:mm') };
 }
 
 export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarProps) {
   const currentOffice = offices.find((office) => office.id === filters.officeId) ?? null;
   const timezone = currentOffice?.timezone ?? null;
 
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const calendarRef = useRef<HTMLDivElement>(null);
-
-  const [prevFrom, setPrevFrom] = useState(filters.from);
-  const [localDate, setLocalDate] = useState(() => deriveDateTime(filters.from, timezone).date);
-  const [localTime, setLocalTime] = useState(() => deriveDateTime(filters.from, timezone).time);
-
-  if (filters.from !== prevFrom) {
-    setPrevFrom(filters.from);
-    const derived = deriveDateTime(filters.from, timezone);
-    setLocalDate(derived.date);
-    setLocalTime(derived.time);
-  }
+  const derived = deriveDateTime(filters.from, timezone);
+  const localDate = derived.date;
+  const localTime = derived.time;
 
   const duration =
     timezone && filters.from && filters.to
@@ -74,24 +68,25 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
   }
 
   const handleOfficeChange = (officeId: string) => {
-    setLocalDate('');
-    setLocalTime('');
     onChange({ officeId, from: null, to: null });
   };
 
-  const handleDateChange = (date: string) => {
-    setLocalDate(date);
-    applyInterval(date, localTime, duration);
-    setIsCalendarOpen(false);
+  const handleDateChange = (date: DateTime | null) => {
+    if (!date) {
+      onChange({ from: null, to: null });
+      return;
+    }
+    applyInterval(date.toISODate() ?? '', localTime || '09:00', duration);
   };
 
   const handleTimeChange = (time: string) => {
-    setLocalTime(time);
-    applyInterval(localDate, time, duration);
+    if (!localDate) return;
+    applyInterval(localDate.toISODate() ?? '', time, duration);
   };
 
   const handleDurationChange = (value: number) => {
-    applyInterval(localDate, localTime, value);
+    if (!localDate || !localTime) return;
+    applyInterval(localDate.toISODate() ?? '', localTime, value);
   };
 
   const handleCapacityChange = (value: number) => {
@@ -102,95 +97,21 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
   const handleCapacityUp = () => handleCapacityChange(capacity + 1);
   const handleCapacityDown = () => handleCapacityChange(capacity - 1);
 
-  const handleCalendarSelect = (selectedDate: Date) => {
-    const year = selectedDate.getFullYear();
-    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(selectedDate.getDate()).padStart(2, '0');
-    handleDateChange(`${year}-${month}-${day}`);
-  };
-
-  useEffect(() => {
-    if (!isCalendarOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
-        setIsCalendarOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isCalendarOpen]);
-
-  const minDate = timezone ? DateTime.now().setZone(timezone).toJSDate() : new Date();
+  const minDate = timezone
+    ? DateTime.now().setZone(timezone).startOf('day')
+    : DateTime.now().startOf('day');
   const maxDate = timezone
-    ? DateTime.now().setZone(timezone).plus({ days: MAX_ADVANCE_DAYS }).toJSDate()
-    : undefined;
-
-  const formatDateDisplay = (dateStr: string): string => {
-    if (!dateStr) return 'Выберите дату';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return 'Выберите дату';
-    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    if (isNaN(d.getTime())) return 'Выберите дату';
-
-    const monthNames = [
-      'Января',
-      'Февраля',
-      'Марта',
-      'Апреля',
-      'Мая',
-      'Июня',
-      'Июля',
-      'Августа',
-      'Сентября',
-      'Октября',
-      'Ноября',
-      'Декабря',
-    ];
-    const weekDays = [
-      'Воскресенье',
-      'Понедельник',
-      'Вторник',
-      'Среда',
-      'Четверг',
-      'Пятница',
-      'Суббота',
-    ];
-    return `${d.getDate()}, ${monthNames[d.getMonth()]}, ${weekDays[d.getDay()]}`;
-  };
-
-  const selectedDateObj = localDate
-    ? (() => {
-        const parts = localDate.split('-');
-        if (parts.length !== 3) return undefined;
-        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      })()
-    : undefined;
+    ? DateTime.now().setZone(timezone).plus({ days: MAX_ADVANCE_DAYS }).startOf('day')
+    : DateTime.now().plus({ days: MAX_ADVANCE_DAYS }).startOf('day');
 
   return (
     <div className={styles.filtersBar}>
       <div className={styles.filtersBar__header}>
-        <div className={styles.filtersBar__officeSelect}>
-          <label htmlFor="rooms-office-select" className={styles.filtersBar__label}>
-            Выберите офис
-          </label>
-          <select
-            id="rooms-office-select"
-            className={styles.filtersBar__select}
-            value={filters.officeId ?? ''}
-            onChange={(e) => handleOfficeChange(e.target.value)}
-          >
-            <option value="">Выберите офис</option>
-            {offices.map((office) => (
-              <option key={office.id} value={office.id}>
-                {office.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <OfficeSwitcher
+          offices={offices}
+          currentOffice={currentOffice}
+          onChange={handleOfficeChange}
+        />
       </div>
 
       {currentOffice && (
@@ -207,52 +128,43 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
 
       <div className={styles.filtersBar__params}>
         <div className={styles.filtersBar__param}>
-          <label htmlFor="rooms-date-input" className={styles.filtersBar__label}>
-            Дата
-          </label>
-          <div className={styles.filtersBar__dateWrapper}>
-            <input
-              id="rooms-date-input"
-              type="text"
-              className={`${styles.filtersBar__input} ${localDate ? styles.filtersBar__input_filled : ''}`}
-              value={formatDateDisplay(localDate)}
-              onFocus={() => setIsCalendarOpen(true)}
-              readOnly
-              placeholder="Выберите дату"
-              disabled={!timezone}
-            />
-            {isCalendarOpen && (
-              <div className={styles.filtersBar__calendarDropdown} ref={calendarRef}>
-                <Calendar
-                  selectedDate={selectedDateObj}
-                  onSelectDate={handleCalendarSelect}
-                  minDate={minDate}
-                  maxDate={maxDate}
-                />
-              </div>
-            )}
-          </div>
+          <span className={styles.filtersBar__label}>Дата</span>
+          <DatePicker
+            value={localDate}
+            onChange={handleDateChange}
+            minDate={minDate}
+            maxDate={maxDate}
+            disabled={!timezone}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                size: 'small',
+                className: styles.filtersBar__pillField,
+              },
+            }}
+          />
         </div>
 
         <div className={styles.filtersBar__param}>
           <label htmlFor="rooms-start-time" className={styles.filtersBar__label}>
             Время начала
           </label>
-          <input
-            id="rooms-start-time"
-            type="time"
-            className={styles.filtersBar__input}
-            value={localTime}
-            onChange={(e) => handleTimeChange(e.target.value)}
-            disabled={!timezone}
-            step={900}
-          />
+          <div className={styles.filtersBar__pill}>
+            <ClockIcon className={styles.filtersBar__pillIcon} fontSize="small" />
+            <input
+              id="rooms-start-time"
+              type="time"
+              className={styles.filtersBar__pillInput}
+              value={localTime}
+              onChange={(e) => handleTimeChange(e.target.value)}
+              disabled={!timezone || !localDate}
+              step={900}
+            />
+          </div>
         </div>
 
         <div className={styles.filtersBar__param}>
-          <label htmlFor="rooms-duration" className={styles.filtersBar__label}>
-            Длительность
-          </label>
+          <span className={styles.filtersBar__label}>Длительность</span>
           <DurationDropdown selectedDuration={duration} onChange={handleDurationChange} />
         </div>
 
@@ -260,7 +172,9 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
           <label htmlFor="rooms-capacity" className={styles.filtersBar__label}>
             Вместимость
           </label>
-          <div className={styles.filtersBar__capacity}>
+          <div className={styles.filtersBar__pill}>
+            <PeopleIcon className={styles.filtersBar__pillIcon} fontSize="small" />
+            <span className={styles.filtersBar__pillPrefix}>Мин.</span>
             <input
               id="rooms-capacity"
               type="number"
@@ -269,6 +183,7 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
               onChange={(e) => handleCapacityChange(Number(e.target.value))}
               min={1}
             />
+            <span className={styles.filtersBar__pillSuffix}>чел.</span>
             <div className={styles.filtersBar__capacityControls}>
               <button
                 type="button"

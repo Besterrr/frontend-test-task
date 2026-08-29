@@ -9,6 +9,7 @@ import { LoadingState } from '../../components/LoadingState';
 import { ErrorState } from '../../components/ErrorState';
 import { RoomSchedule } from './RoomSchedule';
 import { BookingForm } from './BookingForm';
+import { MAX_ADVANCE_DAYS } from '../../lib/officeTime';
 
 export function RoomDetailsPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -20,6 +21,7 @@ export function RoomDetailsPage() {
   if (!room) return null;
 
   const timezone = room.office.timezone;
+  const now = DateTime.now().setZone(timezone);
   const day = selectedDate ?? DateTime.now().setZone(timezone);
   const from = day.startOf('day').toUTC().toISO() ?? '';
   const to = day.endOf('day').toUTC().toISO() ?? '';
@@ -36,8 +38,8 @@ export function RoomDetailsPage() {
       <DatePicker
         label="День"
         value={day}
-        minDate={DateTime.now().setZone(timezone)}
-        maxDate={DateTime.now().setZone(timezone).plus({ days: 30 })}
+        minDate={now.startOf('day')}
+        maxDate={now.plus({ days: MAX_ADVANCE_DAYS }).endOf('day')}
         onChange={(value) => setSelectedDate(value)}
         sx={{ maxWidth: 240 }}
       />

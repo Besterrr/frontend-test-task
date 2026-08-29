@@ -81,4 +81,35 @@ describe('RoomCard', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/rooms/room-everest');
   });
+
+  it('кнопка "Подробнее" переходит на страницу комнаты', async () => {
+    const user = userEvent.setup();
+    renderCard(baseRoom);
+
+    await user.click(screen.getByRole('button', { name: 'Подробнее' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/rooms/room-everest');
+  });
+
+  it('кнопка "Забронировать" переходит на страницу комнаты, если комната доступна', async () => {
+    const user = userEvent.setup();
+    renderCard({ ...baseRoom, available: true });
+
+    await user.click(screen.getByRole('button', { name: 'Забронировать' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/rooms/room-everest');
+  });
+
+  it('кнопка "Забронировать" отключена, если комната недоступна', () => {
+    renderCard({ ...baseRoom, available: false });
+
+    expect(screen.getByRole('button', { name: 'Забронировать' })).toBeDisabled();
+  });
+
+  it('кнопка "Забронировать" активна, если available не передан', () => {
+    renderCard(baseRoom);
+
+    expect(screen.getByRole('button', { name: 'Забронировать' })).not.toBeDisabled();
+  });
+
 });

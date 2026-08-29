@@ -121,4 +121,65 @@ describe('DurationDropdown', () => {
     rerender(<DurationDropdown selectedDuration={0.5} onChange={onChange} />);
     expect(getTrigger(container)).toHaveTextContent('30 мин');
   });
+
+  it('устанавливает role="combobox" и aria-expanded на триггере', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<DurationDropdown />);
+    const trigger = getTrigger(container);
+
+    expect(trigger).toHaveAttribute('role', 'combobox');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('открывает список по нажатию Enter на триггере с клавиатуры', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<DurationDropdown />);
+    const trigger = getTrigger(container);
+
+    trigger.focus();
+    await user.keyboard('{Enter}');
+
+    expect(getMenu(container)).toBeInTheDocument();
+  });
+
+  it('закрывает список по Escape и возвращает фокус на триггер', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<DurationDropdown />);
+    const trigger = getTrigger(container);
+
+    await user.click(trigger);
+    expect(getMenu(container)).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(getMenu(container)).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('список имеет role="listbox", а пункты role="option"', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<DurationDropdown />);
+
+    await user.click(getTrigger(container));
+    const menu = getMenu(container);
+
+    expect(menu).toHaveAttribute('role', 'listbox');
+    const options = menu?.querySelectorAll('[role="option"]');
+    expect(options?.length).toBe(8);
+  });
+
+  it('выбранный пункт имеет aria-selected="true"', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<DurationDropdown selectedDuration={0.5} />);
+
+    await user.click(getTrigger(container));
+    const menu = getMenu(container);
+    const selectedOption = within(menu!).getByText('30 мин').closest('[role="option"]');
+
+    expect(selectedOption).toHaveAttribute('aria-selected', 'true');
+  });
 });

@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
-import { DeleteOutlined as DeleteOutlineIcon } from '@mui/icons-material';
+import {
+  DeleteOutlined as DeleteOutlineIcon,
+  CalendarMonthOutlined as CalendarMonthOutlineIcon,
+} from '@mui/icons-material';
 import { DateTime } from 'luxon';
 import type { BookingView } from '../../api/models';
+import { downloadBookingIcs, isWithinIcsExportWindow } from '../../lib/ics';
 
 interface BookingListItemProps {
   booking: BookingView;
@@ -15,6 +19,7 @@ export function BookingListItem({ booking, onCancel, isCancelling }: BookingList
   const start = DateTime.fromISO(booking.startsAt).setZone(booking.office.timezone);
   const end = DateTime.fromISO(booking.endsAt).setZone(booking.office.timezone);
   const isFuture = DateTime.fromISO(booking.startsAt) > DateTime.now();
+  const canExportToCalendar = isWithinIcsExportWindow(booking);
 
   const handleCancel = async () => {
     setLocalError(null);
@@ -40,24 +45,36 @@ export function BookingListItem({ booking, onCancel, isCancelling }: BookingList
             {booking.comment && <Typography variant="body2">{booking.comment}</Typography>}
           </Stack>
 
-          <Stack spacing={1} sx={{ alignItems: 'flex-end' }}>
-            {!isFuture && <Chip label="Завершено" size="small" />}
-            {isFuture && (
-              <Tooltip title="Отменить бронирование">
-                <span>
-                  <IconButton
-                    aria-label="Отменить бронирование"
-                    color="error"
-                    disabled={isCancelling}
-                    onClick={() => {
-                      void handleCancel();
-                    }}
-                  >
-                    <DeleteOutlineIcon />
-                  </IconButton>
-                </span>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+            {canExportToCalendar && (
+              <Tooltip title="Добавить в календарь">
+                <IconButton
+                  aria-label="Добавить в календарь"
+                  onClick={() => downloadBookingIcs(booking)}
+                >
+                  <CalendarMonthOutlineIcon />
+                </IconButton>
               </Tooltip>
             )}
+            <Stack spacing={1} sx={{ alignItems: 'flex-end' }}>
+              {!isFuture && <Chip label="Завершено" size="small" />}
+              {isFuture && (
+                <Tooltip title="Отменить бронирование">
+                  <span>
+                    <IconButton
+                      aria-label="Отменить бронирование"
+                      color="error"
+                      disabled={isCancelling}
+                      onClick={() => {
+                        void handleCancel();
+                      }}
+                    >
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
+            </Stack>
           </Stack>
         </Stack>
         {localError && (
