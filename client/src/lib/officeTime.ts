@@ -57,6 +57,14 @@ export function validateOfficeInterval(
   return null;
 }
 
+const TIMEZONE_ABBREVIATIONS: Record<string, string> = {
+  'Europe/Moscow': 'MSK',
+};
+
+export function getTimezoneAbbreviation(timezone: string): string {
+  return TIMEZONE_ABBREVIATIONS[timezone] ?? timezone;
+}
+
 export const INTERVAL_STEP_MINUTES = STEP_MINUTES;
 export const WORKDAY_START = WORKDAY_START_HOUR;
 export const WORKDAY_END = WORKDAY_END_HOUR;

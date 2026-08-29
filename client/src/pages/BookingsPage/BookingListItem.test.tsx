@@ -53,110 +53,48 @@ describe('BookingListItem', () => {
     vi.useRealTimers();
   });
 
-  it('отображает тему, время, офис и комнату', () => {
-    render(<BookingListItem booking={makeBooking()} onCancel={vi.fn()} isCancelling={false} />);
+  it('отображает тему, месяц, число, комнату, этаж и время', () => {
+    render(<BookingListItem booking={makeBooking()} onCancelClick={vi.fn()} />);
 
     expect(screen.getByText('Обсуждение проекта')).toBeInTheDocument();
-    expect(screen.getByText(/19\.08\.2026/)).toBeInTheDocument();
-    expect(screen.getByText(/10:00–11:00/)).toBeInTheDocument();
-    expect(screen.getByText(/Офис Москва · Эверест/)).toBeInTheDocument();
+    expect(screen.getByText('19')).toBeInTheDocument();
+    expect(screen.getByText('Эверест')).toBeInTheDocument();
+    expect(screen.getByText(/4 этаж/)).toBeInTheDocument();
+    expect(screen.getByText(/10:00 - 11:00 MSK/)).toBeInTheDocument();
   });
 
-  it('отображает комментарий, если он есть', () => {
-    render(
-      <BookingListItem
-        booking={makeBooking({ comment: 'Сверяем план работ' })}
-        onCancel={vi.fn()}
-        isCancelling={false}
-      />,
-    );
-
-    expect(screen.getByText('Сверяем план работ')).toBeInTheDocument();
+  it('показывает кнопку "Отменить" для будущего бронирования', () => {
+    render(<BookingListItem booking={makeBooking()} onCancelClick={vi.fn()} />);
+    expect(screen.getByText('Отменить')).toBeInTheDocument();
   });
 
-  it('не отображает блок комментария, если его нет', () => {
-    render(
-      <BookingListItem
-        booking={makeBooking({ comment: null })}
-        onCancel={vi.fn()}
-        isCancelling={false}
-      />,
-    );
-
-    expect(screen.queryByText('Сверяем план работ')).not.toBeInTheDocument();
-  });
-
-  it('показывает кнопку отмены для будущего бронирования', () => {
-    render(<BookingListItem booking={makeBooking()} onCancel={vi.fn()} isCancelling={false} />);
-
-    expect(screen.getByRole('button', { name: 'Отменить бронирование' })).toBeInTheDocument();
-    expect(screen.queryByText('Завершено')).not.toBeInTheDocument();
-  });
-
-  it('показывает чип "Завершено" вместо кнопки для прошедшего бронирования', () => {
+  it('не показывает кнопку "Отменить" для прошедшего бронирования', () => {
     render(
       <BookingListItem
         booking={makeBooking({
           startsAt: '2026-08-17T07:00:00.000Z',
           endsAt: '2026-08-17T08:00:00.000Z',
         })}
-        onCancel={vi.fn()}
-        isCancelling={false}
+        onCancelClick={vi.fn()}
       />,
     );
 
-    expect(screen.getByText('Завершено')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Отменить бронирование' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Отменить')).not.toBeInTheDocument();
   });
 
-  it('вызывает onCancel с id бронирования по клику', async () => {
+  it('вызывает onCancelClick с объектом бронирования по клику', async () => {
     const user = userEvent.setup({ delay: null });
-    const onCancel = vi.fn().mockResolvedValue(undefined);
+    const onCancelClick = vi.fn();
+    const booking = makeBooking();
 
-    render(<BookingListItem booking={makeBooking()} onCancel={onCancel} isCancelling={false} />);
+    render(<BookingListItem booking={booking} onCancelClick={onCancelClick} />);
+    await user.click(screen.getByText('Отменить'));
 
-    await user.click(screen.getByRole('button', { name: 'Отменить бронирование' }));
-
-    expect(onCancel).toHaveBeenCalledWith('booking-1');
-  });
-
-  it('блокирует кнопку отмены, пока isCancelling: true', () => {
-    render(<BookingListItem booking={makeBooking()} onCancel={vi.fn()} isCancelling={true} />);
-
-    expect(screen.getByRole('button', { name: 'Отменить бронирование' })).toBeDisabled();
-  });
-
-  it('показывает локальное сообщение об ошибке, если onCancel отклонён', async () => {
-    const user = userEvent.setup({ delay: null });
-    const onCancel = vi.fn().mockRejectedValue(new Error('Ошибка сети'));
-
-    render(<BookingListItem booking={makeBooking()} onCancel={onCancel} isCancelling={false} />);
-
-    await user.click(screen.getByRole('button', { name: 'Отменить бронирование' }));
-
-    expect(await screen.findByText('Не удалось отменить бронирование')).toBeInTheDocument();
-  });
-
-  it('сбрасывает локальную ошибку при повторной попытке отмены', async () => {
-    const user = userEvent.setup({ delay: null });
-    const onCancel = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('Ошибка сети'))
-      .mockResolvedValueOnce(undefined);
-
-    render(<BookingListItem booking={makeBooking()} onCancel={onCancel} isCancelling={false} />);
-
-    const button = screen.getByRole('button', { name: 'Отменить бронирование' });
-    await user.click(button);
-    expect(await screen.findByText('Не удалось отменить бронирование')).toBeInTheDocument();
-
-    await user.click(button);
-    expect(screen.queryByText('Не удалось отменить бронирование')).not.toBeInTheDocument();
+    expect(onCancelClick).toHaveBeenCalledWith(booking);
   });
 
   it('показывает кнопку экспорта в календарь для бронирования в пределах окна', () => {
-    render(<BookingListItem booking={makeBooking()} onCancel={vi.fn()} isCancelling={false} />);
-
+    render(<BookingListItem booking={makeBooking()} onCancelClick={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Добавить в календарь' })).toBeInTheDocument();
   });
 
@@ -167,8 +105,7 @@ describe('BookingListItem', () => {
           startsAt: '2026-09-25T07:00:00.000Z',
           endsAt: '2026-09-25T08:00:00.000Z',
         })}
-        onCancel={vi.fn()}
-        isCancelling={false}
+        onCancelClick={vi.fn()}
       />,
     );
 
@@ -182,12 +119,30 @@ describe('BookingListItem', () => {
           startsAt: '2026-07-25T07:00:00.000Z',
           endsAt: '2026-07-25T08:00:00.000Z',
         })}
-        onCancel={vi.fn()}
-        isCancelling={false}
+        onCancelClick={vi.fn()}
       />,
     );
 
     expect(screen.queryByRole('button', { name: 'Добавить в календарь' })).not.toBeInTheDocument();
   });
 
+  it('вызывает downloadBookingIcs по клику на кнопку экспорта', async () => {
+    const createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(createObjectURL);
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(vi.fn());
+    const originalCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = originalCreateElement(tag);
+      if (tag === 'a') el.click = vi.fn();
+      return el;
+    });
+
+    const user = userEvent.setup({ delay: null });
+    render(<BookingListItem booking={makeBooking()} onCancelClick={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Добавить в календарь' }));
+
+    expect(createObjectURL).toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
 });

@@ -140,6 +140,7 @@ export function RoomFiltersBar({ offices, filters, onChange }: RoomFiltersBarPro
                 fullWidth: true,
                 size: 'small',
                 className: styles.filtersBar__pillField,
+                'aria-label': 'Дата',
               },
             }}
           />

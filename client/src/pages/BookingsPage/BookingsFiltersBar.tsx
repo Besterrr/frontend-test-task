@@ -1,4 +1,9 @@
-import { MenuItem, Stack, TextField } from '@mui/material';
+import { useState } from 'react';
+import { Button, Menu, MenuItem, Typography } from '@mui/material';
+import {
+  KeyboardArrowDown as ArrowDownIcon,
+  CalendarMonthOutlined as CalendarIcon,
+} from '@mui/icons-material';
 import type { Office } from '../../api/models';
 import type { BookingsFilters } from './useBookingsFilters';
 
@@ -8,43 +13,65 @@ interface BookingsFiltersBarProps {
   onChange: (patch: Partial<BookingsFilters>) => void;
 }
 
-const SCOPE_OPTIONS: { value: BookingsFilters['scope']; label: string }[] = [
-  { value: 'upcoming', label: 'Предстоящие' },
-  { value: 'past', label: 'Прошедшие' },
-  { value: 'all', label: 'Все' },
-];
-
 export function BookingsFiltersBar({ offices, filters, onChange }: BookingsFiltersBarProps) {
-  return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
-      <TextField
-        select
-        label="Период"
-        value={filters.scope}
-        onChange={(e) => onChange({ scope: e.target.value as BookingsFilters['scope'] })}
-        sx={{ minWidth: 200 }}
-      >
-        {SCOPE_OPTIONS.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
-            {option.label}
-          </MenuItem>
-        ))}
-      </TextField>
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const isOpen = Boolean(anchorEl);
 
-      <TextField
-        select
-        label="Офис"
-        value={filters.officeId ?? ''}
-        onChange={(e) => onChange({ officeId: e.target.value || null })}
-        sx={{ minWidth: 240 }}
+  const currentOffice = offices.find((office) => office.id === filters.officeId) ?? null;
+
+  const handleSelect = (officeId: string | null) => {
+    onChange({ officeId });
+    setAnchorEl(null);
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 12 }}>
+      <Button
+        onClick={(event) => setAnchorEl(event.currentTarget)}
+        endIcon={<ArrowDownIcon />}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        variant="outlined"
+        sx={{
+          color: '#0f172a',
+          borderColor: '#e2e8f0',
+          textTransform: 'none',
+          fontWeight: 500,
+          borderRadius: '8px',
+        }}
       >
-        <MenuItem value="">Все офисы</MenuItem>
+        {currentOffice ? currentOffice.name : 'Все офисы'}
+      </Button>
+      <Menu anchorEl={anchorEl} open={isOpen} onClose={() => setAnchorEl(null)}>
+        <MenuItem selected={!currentOffice} onClick={() => handleSelect(null)}>
+          <Typography variant="body2">Все офисы</Typography>
+        </MenuItem>
         {offices.map((office) => (
-          <MenuItem key={office.id} value={office.id}>
-            {office.name}
+          <MenuItem
+            key={office.id}
+            selected={office.id === currentOffice?.id}
+            onClick={() => handleSelect(office.id)}
+          >
+            <Typography variant="body2">{office.name}</Typography>
           </MenuItem>
         ))}
-      </TextField>
-    </Stack>
+      </Menu>
+
+      <Button
+        startIcon={<CalendarIcon />}
+        variant="outlined"
+        disabled
+        sx={{
+          color: '#0f172a',
+          borderColor: '#e2e8f0',
+          textTransform: 'none',
+          fontWeight: 500,
+          borderRadius: '8px',
+          '&.Mui-disabled': { color: '#0f172a', borderColor: '#e2e8f0' },
+        }}
+      >
+        За все время
+      </Button>
+    </div>
   );
 }

@@ -1,88 +1,70 @@
-import { useState } from 'react';
-import { Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { IconButton, Tooltip } from '@mui/material';
 import {
-  DeleteOutlined as DeleteOutlineIcon,
-  CalendarMonthOutlined as CalendarMonthOutlineIcon,
+  MeetingRoomOutlined as RoomIcon,
+  CalendarMonthOutlined as CalendarIcon,
 } from '@mui/icons-material';
 import { DateTime } from 'luxon';
 import type { BookingView } from '../../api/models';
+import { getTimezoneAbbreviation } from '../../lib/officeTime';
 import { downloadBookingIcs, isWithinIcsExportWindow } from '../../lib/ics';
+import styles from './BookingListItem.module.css';
 
 interface BookingListItemProps {
   booking: BookingView;
-  onCancel: (bookingId: string) => Promise<void>;
-  isCancelling: boolean;
+  onCancelClick: (booking: BookingView) => void;
 }
 
-export function BookingListItem({ booking, onCancel, isCancelling }: BookingListItemProps) {
-  const [localError, setLocalError] = useState<string | null>(null);
+export function BookingListItem({ booking, onCancelClick }: BookingListItemProps) {
   const start = DateTime.fromISO(booking.startsAt).setZone(booking.office.timezone);
   const end = DateTime.fromISO(booking.endsAt).setZone(booking.office.timezone);
   const isFuture = DateTime.fromISO(booking.startsAt) > DateTime.now();
   const canExportToCalendar = isWithinIcsExportWindow(booking);
-
-  const handleCancel = async () => {
-    setLocalError(null);
-    try {
-      await onCancel(booking.id);
-    } catch {
-      setLocalError('Не удалось отменить бронирование');
-    }
-  };
+  const monthLabel = start.setLocale('ru').toFormat('LLLL').toUpperCase();
+  const tz = getTimezoneAbbreviation(booking.office.timezone);
 
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Stack spacing={0.5}>
-            <Typography variant="subtitle1">{booking.title}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {start.toFormat('dd.MM.yyyy')} · {start.toFormat('HH:mm')}–{end.toFormat('HH:mm')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {booking.office.name} · {booking.room.name}
-            </Typography>
-            {booking.comment && <Typography variant="body2">{booking.comment}</Typography>}
-          </Stack>
+    <div className={styles.card}>
+      <div className={styles.card__date}>
+        <span className={styles.card__dateMonth}>{monthLabel}</span>
+        <span className={styles.card__dateDay}>{start.toFormat('d')}</span>
+      </div>
 
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'flex-start' }}>
-            {canExportToCalendar && (
-              <Tooltip title="Добавить в календарь">
-                <IconButton
-                  aria-label="Добавить в календарь"
-                  onClick={() => downloadBookingIcs(booking)}
-                >
-                  <CalendarMonthOutlineIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Stack spacing={1} sx={{ alignItems: 'flex-end' }}>
-              {!isFuture && <Chip label="Завершено" size="small" />}
-              {isFuture && (
-                <Tooltip title="Отменить бронирование">
-                  <span>
-                    <IconButton
-                      aria-label="Отменить бронирование"
-                      color="error"
-                      disabled={isCancelling}
-                      onClick={() => {
-                        void handleCancel();
-                      }}
-                    >
-                      <DeleteOutlineIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              )}
-            </Stack>
-          </Stack>
-        </Stack>
-        {localError && (
-          <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-            {localError}
-          </Typography>
+      <div className={styles.card__body}>
+        <span className={styles.card__title}>{booking.title}</span>
+        <div className={styles.card__meta}>
+          <RoomIcon fontSize="small" className={styles.card__metaIcon} />
+          <span className={styles.card__room}>{booking.room.name}</span>
+          <span className={styles.card__dot}>•</span>
+          <span>{booking.room.floor} этаж</span>
+          <span className={styles.card__dot}>•</span>
+          <span>
+            {start.toFormat('HH:mm')} - {end.toFormat('HH:mm')} {tz}
+          </span>
+        </div>
+      </div>
+
+      <div className={styles.card__actions}>
+        {canExportToCalendar && (
+          <Tooltip title="Добавить в календарь">
+            <IconButton
+              aria-label="Добавить в календарь"
+              size="small"
+              onClick={() => downloadBookingIcs(booking)}
+            >
+              <CalendarIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )}
-      </CardContent>
-    </Card>
+        {isFuture && (
+          <button
+            type="button"
+            className={styles.card__cancelBtn}
+            onClick={() => onCancelClick(booking)}
+          >
+            Отменить
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

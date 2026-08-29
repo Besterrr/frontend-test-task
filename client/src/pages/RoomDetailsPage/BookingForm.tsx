@@ -23,7 +23,7 @@ interface BookingFormProps {
   onCreated?: () => void;
 }
 
-const DURATION_OPTIONS_MIN = [15, 30, 45, 60, 90, 120];
+const DURATION_OPTIONS_MIN = [15, 30, 45, 60, 75, 90, 120];
 
 export function BookingForm({ roomId, timezone, onCreated }: BookingFormProps) {
   const { enqueueSnackbar } = useSnackbar();
@@ -165,9 +165,9 @@ export function BookingForm({ roomId, timezone, onCreated }: BookingFormProps) {
           >
             {DURATION_OPTIONS_MIN.map((minutes) => (
               <MenuItem key={minutes} value={minutes}>
-                {minutes < 60
-                  ? `${minutes} мин`
-                  : `${minutes / 60} ч${minutes % 60 ? ` ${minutes % 60} мин` : ''}`}
+                {minutes >= 60
+                  ? `${Math.floor(minutes / 60)}ч ${minutes % 60 ? `${minutes % 60} мин` : ''}`
+                  : `${minutes} мин`}
               </MenuItem>
             ))}
           </TextField>

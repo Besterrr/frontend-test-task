@@ -138,7 +138,6 @@ describe('RoomFiltersBar', () => {
 
     onChange.mockClear();
 
-    // Компонент полностью controlled: имитируем обновление URL-параметров родителем
     rerender(
       <Wrapper
         filters={{

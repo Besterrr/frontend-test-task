@@ -6,7 +6,7 @@ interface DurationDropdownProps {
   onChange?: (duration: number) => void;
 }
 
-export function DurationDropdown({ selectedDuration = 1, onChange }: DurationDropdownProps) {
+export function DurationDropdown({ selectedDuration = 1, onChange,  }: DurationDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);

@@ -31,58 +31,35 @@ function renderBar(filters: BookingsFilters = defaultFilters, onChange = vi.fn()
   return { onChange };
 }
 
-// Хелпер для получения input внутри селекта
-function getSelectInput(label: string) {
-  const container = screen.getByLabelText(label);
-  // Находим input внутри контейнера
-  const input = container.closest('.MuiInputBase-root')?.querySelector('input');
-  if (!input) {
-    throw new Error(`Input not found for label: ${label}`);
-  }
-  return input;
-}
-
 describe('BookingsFiltersBar', () => {
-  it('отображает выбранное значение периода по умолчанию', () => {
+  it('показывает "Все офисы" по умолчанию', () => {
     renderBar();
-    expect(screen.getByLabelText('Период')).toHaveTextContent('Предстоящие');
+    expect(screen.getByRole('button', { name: /Все офисы/ })).toBeInTheDocument();
   });
 
-  it('не отображает конкретный офис, если он не выбран (value="")', () => {
+  it('показывает название выбранного офиса', () => {
+    renderBar({ ...defaultFilters, officeId: 'office-spb' });
+    expect(screen.getByRole('button', { name: /Офис Санкт-Петербург/ })).toBeInTheDocument();
+  });
+
+  it('открывает меню офисов по клику', async () => {
+    const user = userEvent.setup();
     renderBar();
-    const officeInput = getSelectInput('Офис');
-    expect(officeInput).toHaveValue('');
-  });
 
-  it('вызывает onChange с новым scope при выборе "Прошедшие"', async () => {
-    const user = userEvent.setup();
-    const { onChange } = renderBar();
+    await user.click(screen.getByRole('button', { name: /Все офисы/ }));
 
-    await user.click(screen.getByLabelText('Период'));
-    const listbox = await screen.findByRole('listbox');
-    await user.click(within(listbox).getByText('Прошедшие'));
-
-    expect(onChange).toHaveBeenCalledWith({ scope: 'past' });
-  });
-
-  it('вызывает onChange с новым scope при выборе "Все"', async () => {
-    const user = userEvent.setup();
-    const { onChange } = renderBar();
-
-    await user.click(screen.getByLabelText('Период'));
-    const listbox = await screen.findByRole('listbox');
-    await user.click(within(listbox).getByText('Все'));
-
-    expect(onChange).toHaveBeenCalledWith({ scope: 'all' });
+    const menu = await screen.findByRole('menu');
+    expect(within(menu).getByText('Офис Москва')).toBeInTheDocument();
+    expect(within(menu).getByText('Офис Санкт-Петербург')).toBeInTheDocument();
   });
 
   it('вызывает onChange с officeId при выборе конкретного офиса', async () => {
     const user = userEvent.setup();
     const { onChange } = renderBar();
 
-    await user.click(screen.getByLabelText('Офис'));
-    const listbox = await screen.findByRole('listbox');
-    await user.click(within(listbox).getByText('Офис Москва'));
+    await user.click(screen.getByRole('button', { name: /Все офисы/ }));
+    const menu = await screen.findByRole('menu');
+    await user.click(within(menu).getByText('Офис Москва'));
 
     expect(onChange).toHaveBeenCalledWith({ officeId: 'office-moscow' });
   });
@@ -91,32 +68,21 @@ describe('BookingsFiltersBar', () => {
     const user = userEvent.setup();
     const { onChange } = renderBar({ ...defaultFilters, officeId: 'office-moscow' });
 
-    await user.click(screen.getByLabelText('Офис'));
-    const listbox = await screen.findByRole('listbox');
-    await user.click(within(listbox).getByText('Все офисы'));
+    await user.click(screen.getByRole('button', { name: /Офис Москва/ }));
+    const menu = await screen.findByRole('menu');
+    await user.click(within(menu).getByText('Все офисы'));
 
     expect(onChange).toHaveBeenCalledWith({ officeId: null });
   });
 
-  it('отображает список всех переданных офисов в выпадающем списке', async () => {
-    const user = userEvent.setup();
-    renderBar();
-
-    await user.click(screen.getByLabelText('Офис'));
-    const listbox = await screen.findByRole('listbox');
-
-    expect(within(listbox).getByText('Офис Москва')).toBeInTheDocument();
-    expect(within(listbox).getByText('Офис Санкт-Петербург')).toBeInTheDocument();
-  });
-
   it('работает с пустым списком офисов', () => {
     render(<BookingsFiltersBar offices={[]} filters={defaultFilters} onChange={vi.fn()} />);
-    expect(screen.getByLabelText('Офис')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Все офисы/ })).toBeInTheDocument();
   });
 
-  it('отображает выбранный ранее офис из filters', () => {
-    renderBar({ ...defaultFilters, officeId: 'office-spb' });
-    const officeInput = getSelectInput('Офис');
-    expect(officeInput).toHaveValue('office-spb');
+  it('отображает неактивную кнопку периода "За все время"', () => {
+    renderBar();
+    const periodButton = screen.getByRole('button', { name: /За все время/ });
+    expect(periodButton).toBeDisabled();
   });
 });

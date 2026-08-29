@@ -37,9 +37,9 @@ describe('router', () => {
     expect(await screen.findByRole('heading', { name: 'Выберите офис' })).toBeInTheDocument();
   });
 
-  it('показывает страницу "Ничего не найдено" для неизвестного маршрута', () => {
+  it('показывает страницу 404 для неизвестного маршрута', () => {
     renderAt('/unknown-path');
-    expect(screen.getByText('Ничего не найдено')).toBeInTheDocument();
+    expect(screen.getByText('Страница не найдена')).toBeInTheDocument();
   });
 
   it('рендерит страницу списка комнат на /rooms', async () => {

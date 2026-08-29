@@ -1,0 +1,20 @@
+.summary {
+    background: var(--color-bg-page, #f8fafc);
+    border: 1px solid var(--color-border-light, #e8ecf0);
+    border-radius: var(--radius-md, 8px);
+    padding: 16px;
+}
+
+.summary__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--color-text-secondary, #475569);
+    margin-top: 6px;
+}
+
+.summary__icon {
+    color: var(--color-text-hint, #94a3b8);
+    flex-shrink: 0;
+}

@@ -23,7 +23,7 @@ vi.mock('../../hooks/useMyBookings', () => ({
 const mutateAsyncMock = vi.fn();
 const useCancelBookingMock = vi.fn();
 vi.mock('../../hooks/useCancelBooking', () => ({
-  useCancelBooking: () : unknown => useCancelBookingMock(),
+  useCancelBooking: (): unknown => useCancelBookingMock(),
 }));
 
 const TEST_NOW = new Date('2026-08-18T09:00:00.000Z');
@@ -74,6 +74,15 @@ function renderPage(initialEntry = '/bookings') {
   );
 }
 
+function mockBookingsByScope(map: Record<'upcoming' | 'past', BookingView[]>) {
+  useMyBookingsMock.mockReset().mockImplementation((query: { scope: 'upcoming' | 'past' }) => ({
+    data: map[query.scope],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }));
+}
+
 describe('BookingsPage', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -85,15 +94,10 @@ describe('BookingsPage', () => {
       isLoading: false,
       error: null,
     });
-    useMyBookingsMock.mockReset().mockReturnValue({
-      data: [makeBooking()],
-      isLoading: false,
-      error: null,
-      refetch: vi.fn(),
-    });
+    mockBookingsByScope({ upcoming: [makeBooking()], past: [] });
     useCancelBookingMock.mockReset().mockReturnValue({
       mutateAsync: mutateAsyncMock,
-      variables: undefined,
+      isPending: false,
     });
   });
 
@@ -124,71 +128,53 @@ describe('BookingsPage', () => {
     expect(screen.getByText('Мои бронирования')).toBeInTheDocument();
   });
 
-  it('показывает LoadingState, пока грузятся бронирования', () => {
-    useMyBookingsMock.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      error: null,
-      refetch: vi.fn(),
-    });
+  it('показывает таб "Предстоящие" с количеством по умолчанию', () => {
     renderPage();
-
-    expect(screen.queryByText('Обсуждение проекта')).not.toBeInTheDocument();
+    expect(screen.getByText('Предстоящие (1)')).toBeInTheDocument();
   });
 
-  it('показывает ErrorState с кнопкой повтора при ошибке загрузки бронирований', async () => {
-    const refetch = vi.fn();
-    useMyBookingsMock.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: new Error('Сеть недоступна'),
-      refetch,
-    });
-    const user = userEvent.setup({ delay: null });
+  it('отображает список предстоящих бронирований на активной вкладке', () => {
     renderPage();
-
-    await user.click(screen.getByRole('button', { name: 'Повторить' }));
-    expect(refetch).toHaveBeenCalled();
+    expect(screen.getByText('Обсуждение проекта')).toBeInTheDocument();
   });
 
-  it('показывает EmptyState, если бронирований нет', () => {
-    useMyBookingsMock.mockReturnValue({
-      data: [],
-      isLoading: false,
-      error: null,
-      refetch: vi.fn(),
-    });
+  it('показывает EmptyState, если бронирований на вкладке нет', () => {
+    mockBookingsByScope({ upcoming: [], past: [] });
     renderPage();
 
     expect(screen.getByText('Бронирований не найдено')).toBeInTheDocument();
   });
 
-  it('отображает список бронирований', () => {
-    renderPage();
-    expect(screen.getByText('Обсуждение проекта')).toBeInTheDocument();
-  });
-
-  it('передаёт scope и officeId из URL в useMyBookings', () => {
-    renderPage('/bookings?scope=past&officeId=office-moscow');
-
-    expect(useMyBookingsMock).toHaveBeenCalledWith({
-      scope: 'past',
-      officeId: 'office-moscow',
+  it('переключает вкладку на "Прошедшие" и показывает соответствующий список', async () => {
+    mockBookingsByScope({
+      upcoming: [makeBooking()],
+      past: [makeBooking({ id: 'booking-past', title: 'Ретроспектива' })],
     });
+    const user = userEvent.setup({ delay: null });
+    renderPage();
+
+    await user.click(screen.getByText('Прошедшие'));
+
+    expect(screen.getByText('Ретроспектива')).toBeInTheDocument();
+    expect(screen.queryByText('Обсуждение проекта')).not.toBeInTheDocument();
   });
 
-  it('не передаёт officeId в useMyBookings, если он не выбран', () => {
-    renderPage('/bookings');
+  it('открывает диалог подтверждения по клику на "Отменить"', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderPage();
 
-    expect(useMyBookingsMock).toHaveBeenCalledWith({ scope: 'upcoming' });
+    await user.click(screen.getByText('Отменить'));
+
+    expect(screen.getByText('Отменить бронирование?')).toBeInTheDocument();
   });
 
-  it('показывает уведомление об успехе при отмене бронирования', async () => {
+  it('вызывает мутацию отмены и показывает уведомление об успехе при подтверждении', async () => {
     mutateAsyncMock.mockResolvedValue(undefined);
     const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: 'Отменить бронирование' }));
+    await user.click(screen.getByText('Отменить'));
+    await user.click(screen.getByText('Да, отменить'));
 
     await waitFor(() => {
       expect(mutateAsyncMock).toHaveBeenCalledWith('booking-1');
@@ -200,27 +186,63 @@ describe('BookingsPage', () => {
     });
   });
 
-  it('показывает уведомление об ошибке при неудачной отмене', async () => {
+  it('закрывает диалог после успешной отмены', async () => {
+    mutateAsyncMock.mockResolvedValue(undefined);
+    const user = userEvent.setup({ delay: null });
+    renderPage();
+
+    await user.click(screen.getByText('Отменить'));
+    await user.click(screen.getByText('Да, отменить'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Отменить бронирование?')).not.toBeInTheDocument();
+    });
+  });
+
+  it('показывает уведомление об ошибке и не закрывает диалог при неудачной отмене', async () => {
     mutateAsyncMock.mockRejectedValue(new Error('Сбой сети'));
     const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: 'Отменить бронирование' }));
+    await user.click(screen.getByText('Отменить'));
+    await user.click(screen.getByText('Да, отменить'));
 
     await waitFor(() => {
       expect(enqueueSnackbarMock).toHaveBeenCalledWith('Не удалось отменить бронирование', {
         variant: 'error',
       });
     });
+    expect(screen.getByText('Отменить бронирование?')).toBeInTheDocument();
   });
 
-  it('передаёт isCancelling: true для бронирования, чей id совпадает с variables мутации', () => {
-    useCancelBookingMock.mockReturnValue({
-      mutateAsync: mutateAsyncMock,
-      variables: 'booking-1',
-    });
+  it('закрывает диалог по клику "Нет, оставить" без вызова мутации', async () => {
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
-    expect(screen.getByRole('button', { name: 'Отменить бронирование' })).toBeDisabled();
+    await user.click(screen.getByText('Отменить'));
+    await user.click(screen.getByText('Нет, оставить'));
+
+    expect(screen.queryByText('Отменить бронирование?')).not.toBeInTheDocument();
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('передаёт officeId из фильтра в useMyBookings для обоих scope', () => {
+    renderPage('/bookings?officeId=office-moscow');
+
+    expect(useMyBookingsMock).toHaveBeenCalledWith({
+      scope: 'upcoming',
+      officeId: 'office-moscow',
+    });
+    expect(useMyBookingsMock).toHaveBeenCalledWith({
+      scope: 'past',
+      officeId: 'office-moscow',
+    });
+  });
+
+  it('не передаёt officeId в useMyBookings, если он не выбран', () => {
+    renderPage('/bookings');
+
+    expect(useMyBookingsMock).toHaveBeenCalledWith({ scope: 'upcoming' });
+    expect(useMyBookingsMock).toHaveBeenCalledWith({ scope: 'past' });
   });
 });
